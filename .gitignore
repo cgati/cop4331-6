@@ -15,10 +15,10 @@
 *.dmg
 *.gz
 *.iso
-*.jar
 *.rar
 *.tar
 *.zip
+*.apk
 
 # Logs and databases #
 ######################

@@ -249,7 +249,7 @@ function elementdefense(){
   $stats && $stats({moduleName:'elementdefense', sessionId:$sessionId_0, subSystem:'startup', evtGroup:'bootstrap', millis:(new Date).getTime(), type:'selectingPermutation'});
   if (!isHostedMode()) {
     try {
-      strongName = 'EB209509B5A2AD2940571D5EC2DEFA2A';
+      strongName = '871D7326ED011B47198918E11E1ACEC0';
       var idx = strongName.indexOf(':');
       if (idx != -1) {
         softPermutationId = Number(strongName.substring(idx + 1));

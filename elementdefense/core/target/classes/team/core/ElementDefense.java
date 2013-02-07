@@ -2,8 +2,6 @@ package team.core;
 
 import static playn.core.PlayN.*;
 
-import java.util.Date;
-
 import playn.core.CanvasImage;
 import playn.core.Font;
 import playn.core.Game;

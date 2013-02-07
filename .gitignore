@@ -19,6 +19,7 @@
 *.tar
 *.zip
 *.apk
+*.jar
 
 # Logs and databases #
 ######################

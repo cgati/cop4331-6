@@ -1,0 +1,10 @@
+<module rename-to='towerdefense'>
+  <inherits name='playn.PlayN'/>
+
+  <source path='core'/>
+  <source path='html'/>
+
+  <public path="resources" />
+
+  <entry-point class='com.cgati.cop4331.towerdefense.html.TowerDefenseHtml'/>
+</module>

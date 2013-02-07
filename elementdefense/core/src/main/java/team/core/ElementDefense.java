@@ -24,20 +24,20 @@ public class ElementDefense implements Game {
 	int i, MAX = 180;
 	long[] d = new long[MAX];
 	long sum = 0;
-	Date last;
+	long last = -1;
 
 	@Override
 	public void paint(float alpha) {
 		// the background automatically paints itself, so no need to do anything here!
 		
 		double fps = 0.0;
-		Date date = new Date();
+		long date = System.currentTimeMillis();
 		
-		if(last == null) {
+		if(last == -1) {
 			last = date;
 		} else {
 			sum -= d[i];
-			d[i] = date.getTime() - last.getTime();
+			d[i] = date - last;
 			sum += d[i];
 			
 			if(++i >= MAX) {
@@ -51,8 +51,8 @@ public class ElementDefense implements Game {
 		
 		layer.surface().clear();
 		
-		String text = "FPS " + Math.round(fps); // String.format("FPS: %d", Math.round(fps));
-		TextFormat format = new TextFormat(graphics().createFont("Monospaced", Font.Style.PLAIN, 32.0f), 600, TextFormat.Alignment.CENTER);
+		String text = "FPS " + Math.round(fps);
+		TextFormat format = new TextFormat(graphics().createFont("Courier New", Font.Style.PLAIN, 32.0f), 600, TextFormat.Alignment.CENTER);
 		TextLayout textLayout = graphics().layoutText(text, format);
 		CanvasImage image = graphics().createImage(textLayout.width(), textLayout.height());
 		image.canvas().setFillColor(0xFF00FFFF);

@@ -10,6 +10,6 @@ public class ElementDefenseActivity extends GameActivity {
   @Override
   public void main(){
     platform().assets().setPathPrefix("team/resources");
-    PlayN.run(new ElementDefense());
+    PlayN.run(ElementDefense.getInstance());
   }
 }

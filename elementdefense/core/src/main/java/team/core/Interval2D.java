@@ -27,5 +27,13 @@ public class Interval2D {
 	public float y1() {
 		return b.right;
 	}
+	
+	public float widht() {
+		return a.distance();
+	}
+	
+	public float height() {
+		return b.distance();
+	}
 
 }

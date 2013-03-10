@@ -1,8 +1,12 @@
 package team.core;
 
+import static playn.core.PlayN.*;
+
 import playn.core.Image;
+import playn.core.Surface;
 
 public class Button {
+	private int index;
 	private String text;
 	private Image[] background;
 	private Interval2D boundingBox;
@@ -16,7 +20,11 @@ public class Button {
 	public Button(Interval2D boundingBox, String text, Image[] background) {
 		this.text = text;
 		this.background = background;
-		this.boundingBox = boundingBox;		
+		this.boundingBox = boundingBox;
+	}
+	
+	public void paint(float alpha, Surface surface) {
+		surface.drawImage(background[index], boundingBox.x0(), boundingBox.y0());
 	}
 	
 	public String getText() {

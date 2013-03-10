@@ -7,6 +7,7 @@ import java.util.List;
 import playn.core.CanvasImage;
 import playn.core.Font;
 import playn.core.Game;
+import playn.core.Layer;
 import playn.core.SurfaceLayer;
 import playn.core.TextFormat;
 import playn.core.TextLayout;

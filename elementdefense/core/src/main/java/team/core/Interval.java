@@ -22,6 +22,10 @@ public class Interval {
 		return right;
 	}
 	
+	public float distance() {
+		return right - left;
+	}
+	
 	public boolean intersect(float v) {
 		return v >= left && v <= right;
 	}

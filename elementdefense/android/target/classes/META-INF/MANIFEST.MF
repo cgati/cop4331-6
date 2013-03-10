@@ -1,5 +1,5 @@
 Manifest-Version: 1.0
-Build-Jdk: 1.6.0_39
-Built-By: MAGIC
+Build-Jdk: 1.7.0_03
+Built-By: dominis
 Created-By: Maven Integration for Eclipse
 

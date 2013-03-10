@@ -14,9 +14,6 @@ public class World {
 	private Level[] levels;
 	private SurfaceLayer surface;
 	
-	private SelectBox selectResolutionBox;
-	private List<Button> buttons;
-	
 	private List<Projectile> projectiles;
 	private List<Enemy> enemies;
 	private List<Tower> towers;

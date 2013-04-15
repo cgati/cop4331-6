@@ -1,6 +1,4 @@
-package team.core;
-
-import java.util.List;
+ package team.core;
 
 public class Tower extends Enhanceable {
 	private int killCount;

@@ -1,7 +1,5 @@
 package team.core;
 
-import java.util.List;
-
 public class Enemy extends Enhanceable {
 	private int index;
 	private float speed;

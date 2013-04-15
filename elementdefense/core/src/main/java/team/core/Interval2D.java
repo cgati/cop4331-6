@@ -1,5 +1,7 @@
 package team.core;
 
+import pythagoras.f.Point;
+
 public class Interval2D {
 	Interval a, b;
 	
@@ -8,8 +10,16 @@ public class Interval2D {
 		this.b = b;
 	}
 	
+	public Interval2D(Point position, float width, float height) {
+		this(new Interval(position.x(), position.x() + width), new Interval(position.y(), position.y() + height));
+	}
+	
 	public boolean intersect(Vector point) {
 		return a.intersect(point.getX()) && b.intersect(point.getY());
+	}
+	
+	public boolean intersect(Point point) {
+		return a.intersect(point.x()) && b.intersect(point.y());
 	}
 	
 	public float x0() {
@@ -28,7 +38,7 @@ public class Interval2D {
 		return b.right;
 	}
 	
-	public float widht() {
+	public float width() {
 		return a.distance();
 	}
 	

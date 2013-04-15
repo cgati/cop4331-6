@@ -1,13 +1,14 @@
 package team.core;
 
 public class Enhancer {
-	public final int RANGE = 0;
-	public final int DAMAGE = 1;
-	public final int SPEED = 2;
+	public static final int RANGE = 0;
+	public static final int DAMAGE = 1;
+	public static final int SPEED = 2;
 	
 	private int type;
 	private float scalar;
 	private float duration;
+	private boolean permanent;
 	
 	public Enhancer(int type, float scalar, float duration) {
 		this.type = type;
@@ -16,6 +17,14 @@ public class Enhancer {
 	
 	public int getType() {
 		return type;
+	}
+	
+	public void permanent() {
+		permanent = true;
+	}
+	
+	public boolean isPermanent() {
+		return permanent;
 	}
 	
 	public float getScalar() {

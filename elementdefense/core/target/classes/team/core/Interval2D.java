@@ -14,14 +14,10 @@ public class Interval2D {
 		this(new Interval(position.x(), position.x() + width), new Interval(position.y(), position.y() + height));
 	}
 	
-	public boolean intersect(Vector point) {
-		return a.intersect(point.getX()) && b.intersect(point.getY());
-	}
-	
 	public boolean intersect(Point point) {
 		return a.intersect(point.x()) && b.intersect(point.y());
 	}
-	
+		
 	public float x0() {
 		return a.left;
 	}

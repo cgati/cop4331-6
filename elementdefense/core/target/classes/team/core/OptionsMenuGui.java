@@ -88,14 +88,14 @@ public class OptionsMenuGui extends Gui {
 					ElementDefense.getInstance().setVolume(volume);
 				}
 				
-				hide();
+				OptionsMenuGui.this.hide();
 			}
 		};
 		
 		cancelButton = new Button(new Point(680, 585), "Cancel") {
 			@Override
 			public void pressEvent() {				
-				hide();
+				OptionsMenuGui.this.hide();
 			}
 		};
 	}

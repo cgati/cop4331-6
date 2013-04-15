@@ -1,29 +1,74 @@
  package team.core;
 
+import playn.core.Sound;
+import pythagoras.f.Point;
+
 public class Tower extends Enhanceable {
-	private int killCount;
+	protected int killCount;
 	
-	private float range;
-	private float speed;
-	private float delay;
+	protected float power;
+	protected float range;
+	protected float speed;
+	protected float delay;
 	
-	private int totalCost;
+	protected int cost;
+	protected int totalCost;
 	
-	private boolean upgraded;	
-	private int upgradeCost;
-	private String upgradeName;
+	protected boolean first;
 	
-	private boolean powerUpgraded;	
-	private int powerUpgradeCost;
+	protected boolean upgraded;	
+	protected int upgradeCost;
+	protected String upgradeName;
 	
-	private boolean speedUpgraded;
-	private int speedUpgradeCost;
+	protected boolean powerUpgraded;	
+	protected int powerUpgradeCost;
 	
-	private String projectileName;
+	protected boolean speedUpgraded;
+	protected int speedUpgradeCost;
 	
-	public Tower(String name, Vector position) {
-		super(name, position);
-		// TODO Auto-generated constructor stub
+	protected boolean rangeUpgraded;
+	protected int rangeUpgradeCost;
+	
+	protected Sound fireSound;
+	
+	protected String projectileName;
+	private Tower template;
+	
+	public Tower(String name) {
+		super(name, null);
+	}
+	
+	public Tower(Tower template, Point position) {
+		super(template.name, position);
+		
+		if(template.template == null) {
+			this.template = template;
+		} else {
+			this.template = template.template;
+		}
+		
+		this.killCount = template.killCount;
+		this.power = template.power;
+		this.range = template.range;
+		this.speed = template.speed;
+		this.delay = template.delay;
+		this.cost = template.cost;
+		this.totalCost = template.totalCost + template.cost;
+		this.upgraded = template.upgraded;
+		this.upgradeName = template.upgradeName;
+		this.powerUpgraded = template.powerUpgraded;
+		this.speedUpgraded = template.powerUpgraded;
+		this.rangeUpgraded = template.rangeUpgraded;
+		this.upgradeCost = template.upgradeCost;
+		this.powerUpgradeCost = template.powerUpgradeCost;
+		this.speedUpgradeCost = template.speedUpgradeCost;
+		this.rangeUpgradeCost = template.rangeUpgradeCost;
+		this.projectileName = template.projectileName;
+		
+		this.sprite = template.sprite;
+		this.spawnSound = template.spawnSound;
+		this.despawnSound = template.despawnSound;
+		this.fireSound = template.fireSound;
 	}
 	
 	public int getTotalCost() {
@@ -38,20 +83,32 @@ public class Tower extends Enhanceable {
 		this.killCount = killCount;
 	}
 	
+	public float getPower() {
+		return power * getPowerMultiplier();
+	}
+	
 	public float getRange() {
-		return range;
+		return range * getRangeMultiplier();
 	}
 	
 	public float getSpeed() {
-		return speed;
+		return speed * getSpeedMultiplier();
 	}
 	
 	public float getDelay() {
 		return delay;
 	}
 	
-	public boolean isUpgrade() {
+	public void setDelay(float delay) {
+		this.delay = delay;
+	}
+		
+	public boolean isUpgraded() {
 		return upgraded;
+	}
+	
+	public int getCost() {
+		return cost;
 	}
 	
 	public int getUpgradeCost() {
@@ -90,13 +147,38 @@ public class Tower extends Enhanceable {
 		// TODO
 	}
 	
+	public boolean isRangeUpgrade() {
+		return rangeUpgraded;
+	}
+	
+	public int getRangeUpgradeCost() {
+		return rangeUpgradeCost;
+	}
+	
+	public void upgradeRange() {
+		// TODO
+	}
+	
+	public void move(Point position) {
+		this.position = position;
+		
+		delay = getSpeed() * 3; 
+	}
+	
+	public int getMoveCost() {
+		return (int)(totalCost * 0.2f);
+	}
+	
+	public int getSellCost() {
+		return (int)(totalCost * 0.6f);
+	}
+	
 	public String getProjectileName() {
 		return projectileName;
 	}
 
 	@Override
 	public void update(float delta) {
-		// TODO Auto-generated method stub
-		
+		delay -= delta;
 	}
 }

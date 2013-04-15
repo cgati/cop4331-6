@@ -1,23 +1,28 @@
 package team.core;
 
 import playn.core.Image;
+import pythagoras.f.Point;
 
 public class Level {
-	private String name;
-	private Image background;
+	protected String name;
+	protected String story;
+	protected Image background;
+
+	protected Point[] spawn;
+	protected Point[][] path;
 	
-	private int levelCount;
-	private int[] waveCount;
-	private int[][] grid;
-	private Enemy[][][] enemies;
-	private float[][] waveDelay;
+	protected int lives;
+	protected int waveCount;
+	protected int initialMoney;
+	protected Object[][] grid;
+	protected float[] waveDelay;
+	protected Enemy[][][] enemies;
+	protected int[][][] enemyCount;
 	
 	private boolean endless;
 	
 	public Level(String name) {
 		this.name = name;
-		
-		// TODO
 	}
 	
 	public String getName() {
@@ -28,28 +33,32 @@ public class Level {
 		return background;
 	}
 	
-	public int[][] getGrid() {
+	public Object[][] getGrid() {
 		return grid;
 	}
 	
-	public int getLevelCount() {
-		return levelCount;
+	public int getWaveCount() {
+		return waveCount;
 	}
 	
-	public int getWaveCount(int level) {
-		return waveCount[level];
+	public int getInitialMoney() {
+		return initialMoney;
+	}
+		
+	public float getWaveDelay(int wave) {
+		return waveDelay[wave];
 	}
 	
-	public float getWaveDelay(int level, int wave) {
-		return waveDelay[level][wave];
+	public int getEnemyCount(int spawn, int wave) {
+		return enemyCount[spawn][wave].length;
 	}
 	
-	public int getEnemyCount(int level, int wave) {
-		return getWaveEnemies(level, wave).length;
+	public int getNumberOfEnemies(int spawn, int wave, int enemy) {
+		return enemyCount[spawn][wave][enemy];
 	}
 	
-	public Enemy[] getWaveEnemies(int level, int wave) {
-		return enemies[level][wave];
+	public Enemy[] getWaveEnemies(int spawn, int wave) {
+		return enemies[spawn][wave];
 	}
 	
 	public boolean isEndless() {

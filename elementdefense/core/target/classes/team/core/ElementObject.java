@@ -5,6 +5,7 @@ import java.util.Map;
 
 import playn.core.Image;
 import playn.core.Sound;
+import pythagoras.f.Point;
 
 public abstract class ElementObject {
 	protected String name;
@@ -12,11 +13,11 @@ public abstract class ElementObject {
 	protected Sound spawnSound;
 	protected Sound despawnSound;
 
-	protected Vector position;
+	protected Point position;
 	
 	protected Map<String, String> state;
 	
-	public ElementObject(String name, Vector position) {
+	public ElementObject(String name, Point position) {
 		this.name = name;
 		this.position = position;
 		
@@ -39,7 +40,7 @@ public abstract class ElementObject {
 		return despawnSound;
 	}
 	
-	public Vector getPosition() {
+	public Point getPosition() {
 		return position;
 	}
 	

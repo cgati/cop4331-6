@@ -12,6 +12,8 @@ public abstract class Button {
 	private Image[] background;
 	private Interval2D boundingBox;
 	
+	private boolean hidden;
+	
 	private int state;
 	
 	public static final int NORMAL = 0;
@@ -25,9 +27,13 @@ public abstract class Button {
 	}
 	
 	public Button(Point position, String text) {
+		this(position, text, 36.0f);
+	}
+	
+	public Button(Point position, String text, float size) {
 		this.text = text;
 		
-		generateBackground(text);
+		generateBackground(text, size);
 
 		this.boundingBox = new Interval2D(new Interval(position.x(), position.x() + background[0].width()), new Interval(position.y(), position.y() + background[0].height()));
 	}
@@ -39,6 +45,10 @@ public abstract class Button {
 	}
 	
 	public void paint(float alpha, Surface surface) {
+		if(hidden) {
+			return;
+		}
+		
 		surface.drawImage(background[state], boundingBox.x0(), boundingBox.y0());
 	}
 	
@@ -64,6 +74,14 @@ public abstract class Button {
 		}
 		
 		this.state = state;
+	}
+	
+	public void hide() {
+		hidden = true;
+	}
+	
+	public void show() {
+		hidden = false;
 	}
 	
 	public void mouseMove(Point p) {		
@@ -118,12 +136,12 @@ public abstract class Button {
 		((CanvasImage)background[2]).canvas().fillRect(0, 0, width, height);
 	}
 	
-	private void generateBackground(String text) {
+	private void generateBackground(String text, float size) {
 		background = new Image[3];
 		
-		background[0] = ElementDefense.getTextImage(text);
-		background[1] = ElementDefense.getTextImage(text);
-		background[2] = ElementDefense.getTextImage(text);
+		background[0] = ElementDefense.getTextImage(text, 236, size);
+		background[1] = ElementDefense.getTextImage(text, 236, size);
+		background[2] = ElementDefense.getTextImage(text, 236, size);
 		
 		float width = background[0].width();
 		float height = background[0].height();

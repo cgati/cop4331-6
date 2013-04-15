@@ -1,42 +1,37 @@
 package team.core;
 
+import pythagoras.f.Point;
+
 public class Projectile extends ElementObject {
-	private float speed;
+	private final float speed = 8.0f;
+	
 	private Enemy target;
 	private Tower source;
 	
-	private int type;
-	private float damage;
-	
-	public Projectile(String name, Vector position, Enemy target, Tower source) {
-		super(name, position);
-		
-		// TODO
+	public Projectile(Point position, Enemy target, Tower source) {
+		super("projectile", position);
 	}
 	
-	public void update(float delta) {
-		// TODO
+	public void update(float delta) {		
+		Point u = target.getPosition().subtract(getPosition().x(), getPosition().y());
+		
+		u = u.mult(1.0f/u.distance(0,0));
+		
+		Point v = u.mult(speed).mult(delta / 1000.0f);
+		
+		Point r = position.add(v.x(),v.y());
+		
+		u = target.getPosition();
+		
+		if(Math.abs(position.subtract(r.x(),r.y()).distance(0,0) - (position.subtract(u.x(),u.y()).distance(0,0) + r.subtract(u.x(),u.y()).distance(0,0))) <= 0.03f) {
+			position = u;
+		} else {
+			position = r;
+		}
 	}
 	
 	public boolean hasHitTarget() {
-		// TODO
-		return false;
-	}
-	
-	public int getType() {
-		return type;
-	}
-	
-	public void setType(int type) {
-		this.type = type;
-	}
-	
-	public float getDamage() {
-		return damage;
-	}
-	
-	public void setDamage(float damage) {
-		this.damage = damage;
+		return target.getPosition().distance(getPosition()) <= 0.03;
 	}
 	
 	public Enemy getTarget() {

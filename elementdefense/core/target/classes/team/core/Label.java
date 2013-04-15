@@ -15,6 +15,8 @@ public class Label {
 	private CanvasImage image;
 	private TextFormat textFormat;
 	
+	private boolean hidden;
+	
 	public Label(Point position) {
 		this(position, "");
 	}
@@ -26,17 +28,30 @@ public class Label {
 	public Label(Point position, String text, float size) {
 		this.position = position;
 		this.textFormat = new TextFormat(graphics().createFont("Courier New", Font.Style.PLAIN, size), 236, TextFormat.Alignment.LEFT);
+		this.image = graphics().createImage(236, 36);
 		
 		setText(text);		
 	}
 	
-	public void setText(String text) {		
+	public void setText(String text) {
+		if(text == null || (this.text != null && this.text.equals(text))) {
+			return;
+		}
+		
 		TextLayout textLayout = graphics().layoutText(text, textFormat);
-		image = graphics().createImage(236, 36);
+		image.canvas().clear();
 		image.canvas().setFillColor(0xFFFFFFFF);
 		image.canvas().fillText(textLayout, 0, 0);
 		
 		this.text = text;
+	}
+	
+	public void hide() {
+		hidden = true;
+	}
+	
+	public void show() {
+		hidden = false;
 	}
 	
 	public String getText() {
@@ -44,6 +59,10 @@ public class Label {
 	}
 	
 	public void paint(float alpha, Surface surface) {
+		if(hidden) {
+			return;
+		}
+		
 		surface.drawImage(image, position.x(), position.y());
 	}
 }

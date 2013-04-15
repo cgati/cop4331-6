@@ -74,7 +74,7 @@ public class ElementDefense implements Game {
 			@Override
 			public void onMouseWheelScroll(WheelEvent event) {
 				// TODO Auto-generated method stub
-				
+								
 			}
 			
 		});
@@ -134,6 +134,9 @@ public class ElementDefense implements Game {
 	
 	@Override
 	public void update(float delta) {
+		if(inGame) {
+			currentWorld.update(delta);
+		}
 	}
 	
 	@Override
@@ -160,6 +163,16 @@ public class ElementDefense implements Game {
 	
 	public static Image getTextImage(String text, float wrap) {
 		TextFormat textFormat = new TextFormat(graphics().createFont("Courier New", Font.Style.PLAIN, 36.0f), wrap, TextFormat.Alignment.LEFT);
+		TextLayout textLayout = graphics().layoutText(text, textFormat);
+		CanvasImage image = graphics().createImage(textLayout.width(), textLayout.height());
+		image.canvas().setFillColor(0xFFFFFFFF);
+		image.canvas().fillText(textLayout, 0, 0);
+		
+		return image;		
+	}
+	
+	public static Image getTextImage(String text, float wrap, float size) {
+		TextFormat textFormat = new TextFormat(graphics().createFont("Courier New", Font.Style.PLAIN, size), wrap, TextFormat.Alignment.LEFT);
 		TextLayout textLayout = graphics().layoutText(text, textFormat);
 		CanvasImage image = graphics().createImage(textLayout.width(), textLayout.height());
 		image.canvas().setFillColor(0xFFFFFFFF);

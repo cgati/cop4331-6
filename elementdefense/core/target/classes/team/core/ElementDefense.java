@@ -70,6 +70,7 @@ public class ElementDefense implements Game {
 				mainMenu.mouseMove(p);
 				optionsMenu.mouseMove(p);
 				currentWorld.mouseMove(p);
+				gameOverMenu.mouseMove(p);
 			}
 
 			@Override
@@ -101,6 +102,8 @@ public class ElementDefense implements Game {
 	public void startGame() {
 		mainMenu.hide();
 		
+		currentWorld.reset();
+		
 		inGame = true;
 	}
 	
@@ -112,8 +115,14 @@ public class ElementDefense implements Game {
 		return optionsMenu;
 	}
 	
+	public GameOverMenuGui getGameOverGui() {
+		return gameOverMenu;
+	}
+	
 	public void quit() {
+		mainMenu.show();
 		
+		inGame = false;
 	}
 	
 	public void resize(float width, float height) {

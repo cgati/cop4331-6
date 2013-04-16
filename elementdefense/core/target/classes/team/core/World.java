@@ -26,7 +26,7 @@ public class World {
 	private int enemy;
 	private int enemyIndex;
 	private int lives;
-	private int speed;
+	private float speed;
 	private float delay;
 	private Tower selectedTower;
 	private Level[] levels;
@@ -362,41 +362,23 @@ public class World {
 	}
 	
 	public void speedUpGame() {
-		++speed;
+		speed *= 2;
 		
 		if(speed > 2) {
 			speed = 2;
-		}		
-	}
-	
-	public void slowDownGame() {
-		--speed;
-		
-		if(speed < 0) {
-			speed = 0;
-		}		
-	}
-	
-	public String getSpeedText() {
-		if(speed == 0) {
-			return "1/2";
-		} else if(speed == 1) {
-			return "1";
-		} else {
-			return "2";
 		}
 	}
 	
-	public void showPauseMenu() {
+	public void slowDownGame() {
+		speed /= 2;
 		
+		if(speed < 0.5f) {
+			speed = 0.5f;
+		}
 	}
 	
-	public void showSettingsMenu() {
-		
-	}
-	
-	public void quit() {
-		
+	public String getSpeedText() {
+		return "" + speed;
 	}
 	
 	public void paint(float alpha) {
@@ -439,18 +421,32 @@ public class World {
 		for(Enemy E : enemies) {			
 			float s = E.healthPercentage();
 			
-			surface.drawImage(E.getSprite(), centerPointGrid(E.getPosition()).x() - (s * E.getSprite().width()) / 2, centerPointGrid(E.getPosition()).y() - (s * E.getSprite().height()) / 2, E.getSprite().width() * s, E.getSprite().height() * s);
+			if(E.isDead()) continue;
+			
+			surface.drawImage(E.getSprite(), (E.getPosition()).x() - (s * E.getSprite().width()) / 2, (E.getPosition()).y() - (s * E.getSprite().height()) / 2, E.getSprite().width() * s, E.getSprite().height() * s);
 		}
 		
 		for(Projectile P : projectiles) {
-			surface.drawImage(P.getSprite(), centerPointGrid(P.getPosition()).x() - P.getSprite().width() / 2, centerPointGrid(P.getPosition()).y() - P.getSprite().height() / 2);
+			surface.drawImage(P.getSprite(), (P.getPosition()).x() - P.getSprite().width() / 2, (P.getPosition()).y() - P.getSprite().height() / 2);
 		}
+	}
+	
+	public void reset() {
+		state = 0;
+		speed = 1;
 	}
 	
 	public void update(float delta) {
 		if(state == 7) {
+			ElementDefense.getInstance().getGameOverGui().show();
+			
+			clearSelectedTower();
+			cancelTowerMove();
+			
 			return;
 		}
+		
+		delta *= speed;
 		
 		if(state == 0) {
 			state = 1;
@@ -463,22 +459,23 @@ public class World {
 		}
 		
 		if(state == 1) {
-			if(level > levels.length) {
+			if(level + 1 >= levels.length) {
 				state = 7;
 				
 				return;
 			}
 			
 			state = 2;
-			delay = 3000;
 			
 			++level;
+			
+			wave = enemy = enemyIndex = 0;
 			
 			map = levels[level].background;
 			lives = levels[level].lives;
 			money = levels[level].initialMoney;
 			grid = levels[level].grid;
-			wave = enemy = enemyIndex = 0;
+			delay = levels[level].getWaveDelay(wave);
 			
 			enemies.clear();
 			projectiles.clear();
@@ -515,7 +512,7 @@ public class World {
 				
 				Enemy e = spawns.get(wave).enemies.get(j);
 				
-				e.position = spawns.get(wave).spawn;
+				e.position = centerPointGrid(spawns.get(wave).spawn);
 				
 				enemies.add(e);
 				
@@ -542,6 +539,34 @@ public class World {
 				}
 			}
 			
+			Iterator<Enemy> enemyIterator = enemies.iterator();
+			
+			while(enemyIterator.hasNext()) {
+				Enemy E = enemyIterator.next();
+				
+				if(E.isDead()) {
+					enemyIterator.remove();
+					
+					money += E.getBounty();
+					
+					continue;
+				}
+				
+				if(!E.hasReachedDestination()) {				
+					E.update(delta);
+					
+					Point P = pointGrid(E.getPosition());
+					
+					collision[(int)P.y()][(int)P.x()].add(E);
+				} else {
+					--lives;
+					
+					E.setHealth(0);
+					
+					enemyIterator.remove();
+				}
+			}
+			
 			Iterator<Projectile> projectileIterator = projectiles.iterator();
 			
 			while(projectileIterator.hasNext()) {
@@ -559,37 +584,64 @@ public class World {
 					if(P.getSource().getProjectileName().equals("fireball")) {
 						List<Enemy> enemies = getEnemiesInRange(pointGrid(P.getPosition()), 2);
 						
-						P.getTarget().takeDamage(P.getSource().getPower() - P.getTarget().getDefense());
+						P.getTarget().takeDamage(P.getDamage() - P.getTarget().getDefense());
 						
-						for(Enemy E : enemies) {
+						enemyIterator = enemies.iterator();
+						
+						while(enemyIterator.hasNext()) {
+							Enemy E = enemyIterator.next();
+							
 							if(E != P.getTarget()) {
-								E.takeDamage(P.getSource().getPower() * 0.2f - E.getDefense());
-								E.takePreDamage(P.getSource().getPower() * 0.2f - E.getDefense());
+								E.takeDamage(P.getDamage() * 0.2f - E.getDefense());
+								E.takePreDamage(P.getDamage() * 0.2f - E.getDefense());
+							}
+							
+							if(E.isDead()) {
+								enemyIterator.remove();
+								
+								money += E.getBounty();
 							}
 						}
 					} else if(P.getSource().getProjectileName().equals("rock")) {
-						List<Enemy> enemies = getEnemiesInRange(new Point(P.getPosition().y(), P.getPosition().x()), 1);
+						List<Enemy> enemies = getEnemiesInRange(pointGrid(P.getPosition()), 1);
 						
-						System.out.println(enemies.size());
-						System.out.println(P.getPosition());
+						P.getTarget().takeDamage(P.getDamage() - P.getTarget().getDefense());
 						
-						P.getTarget().takeDamage(P.getSource().getPower() - P.getTarget().getDefense());
+						enemyIterator = enemies.iterator();
 						
-						for(Enemy E : enemies) {
+						while(enemyIterator.hasNext()) {
+							Enemy E = enemyIterator.next();
+							
 							if(E != P.getTarget()) {
-								E.takeDamage(P.getSource().getPower() * 0.65f - E.getDefense());
-								E.takePreDamage(P.getSource().getPower() * 0.65f - E.getDefense());
+								E.takeDamage(P.getDamage() * 0.65f - E.getDefense());
+								E.takePreDamage(P.getDamage() * 0.65f - E.getDefense());
+							}
+							
+							if(E.isDead()) {
+								enemyIterator.remove();
+								
+								money += E.getBounty();
 							}
 						}
 					} else if(P.getSource().getProjectileName().equals("bubble")) {
 						List<Enemy> enemies = getEnemiesInRange(pointGrid(P.getPosition()), 3);
 						
-						P.getTarget().takeDamage(P.getSource().getPower() - P.getTarget().getDefense());
+						P.getTarget().takeDamage(P.getDamage() - P.getTarget().getDefense());
 						
-						for(Enemy E : enemies) {
+						enemyIterator = enemies.iterator();
+						
+						while(enemyIterator.hasNext()) {
+							Enemy E = enemyIterator.next();
+							
 							if(E != P.getTarget()) {
-								E.takeDamage(P.getSource().getPower() * 0.1f - E.getDefense());
-								E.takePreDamage(P.getSource().getPower() * 0.1f - E.getDefense());
+								E.takeDamage(P.getDamage() * 0.1f - E.getDefense());
+								E.takePreDamage(P.getDamage() * 0.1f - E.getDefense());
+							}
+							
+							if(E.isDead()) {
+								enemyIterator.remove();
+								
+								money += E.getBounty();
 							}
 						}
 					} else if(P.getSource().getProjectileName().equals("air")) {
@@ -603,32 +655,6 @@ public class World {
 					}
 					
 					projectileIterator.remove();
-				}
-			}
-			
-			Iterator<Enemy> enemyIterator = enemies.iterator();
-			
-			while(enemyIterator.hasNext()) {
-				Enemy E = enemyIterator.next();
-				
-				if(E.isDead()) {
-					enemyIterator.remove();
-					
-					continue;
-				}
-				
-				if(!E.hasReachedDestination()) {				
-					E.update(delta);
-					
-					Point P = E.getPosition();
-					
-					collision[(int)P.x()][(int)P.y()].add(E);
-				} else {
-					--lives;
-					
-					E.setHealth(0);
-					
-					enemyIterator.remove();
 				}
 			}
 			
@@ -667,11 +693,11 @@ public class World {
 						}
 						
 						if(T.getProjectileName().equals("fireball")) {
-							E.takePreDamage(T.getPower() - E.getDefense());
+							d = E.takePreDamage(T.getPower() - E.getDefense());
 						} else if(T.getProjectileName().equals("rock")) {
-							E.takePreDamage(T.getPower() - E.getDefense());
+							d = E.takePreDamage(T.getPower() - E.getDefense());
 						} else if(T.getProjectileName().equals("bubble")) {							
-							E.takePreDamage(T.getPower() - E.getDefense());
+							d = E.takePreDamage(T.getPower() - E.getDefense());
 						} else if(T.getProjectileName().equals("air")) {							
 							for(int i = 0; i < list.size(); ++i) {
 								if(!list.get(i).hasEnhancer(Enhancer.SPEED, 0.7f)) {									
@@ -682,7 +708,7 @@ public class World {
 							E = list.get((int)(PlayN.random() * list.size()));
 						}
 						
-						Projectile P = new Projectile(projectileMap.get(T.getProjectileName()), pointGrid(new Point(T.getPosition().y(), T.getPosition().x())), list.get(0), T, d);
+						Projectile P = new Projectile(projectileMap.get(T.getProjectileName()), T.getPosition(), list.get(0), T, d);
 						
 						projectiles.add(P);
 						
@@ -890,7 +916,7 @@ public class World {
 		
 		availableEnemies[0] = new Enemy("Marine");
 		
-		availableEnemies[0].speed = 2.0f;
+		availableEnemies[0].speed = 16.0f;
 		availableEnemies[0].defense = 1;
 		availableEnemies[0].bounty = 2;
 		availableEnemies[0].maxHealth = 5;
@@ -901,7 +927,7 @@ public class World {
 		
 		availableEnemies[1] = new Enemy("Armored Soldier");
 		
-		availableEnemies[1].speed = 1.0f;
+		availableEnemies[1].speed = 10.0f;
 		availableEnemies[1].defense = 2;
 		availableEnemies[1].bounty = 3;
 		availableEnemies[1].maxHealth = 10;
@@ -912,7 +938,7 @@ public class World {
 		
 		availableEnemies[2] = new Enemy("Swift Soldier");
 		
-		availableEnemies[2].speed = 4.0f;
+		availableEnemies[2].speed = 80.0f;
 		availableEnemies[2].defense = 0;
 		availableEnemies[2].bounty = 1;
 		availableEnemies[2].maxHealth = 5;
@@ -923,7 +949,7 @@ public class World {
 		
 		availableEnemies[3] = new Enemy("Swift Carrier");
 		
-		availableEnemies[3].speed = 3.0f;
+		availableEnemies[3].speed = 24.0f;
 		availableEnemies[3].defense = 3;
 		availableEnemies[3].bounty = 4;
 		availableEnemies[3].maxHealth = 15;
@@ -934,7 +960,7 @@ public class World {
 		
 		availableEnemies[4] = new Enemy("Armored Carrier");
 		
-		availableEnemies[4].speed = 1.0f;
+		availableEnemies[4].speed = 8.0f;
 		availableEnemies[4].defense = 8;
 		availableEnemies[4].bounty = 5;
 		availableEnemies[4].maxHealth = 100;
@@ -945,7 +971,7 @@ public class World {
 	}
 	
 	private void setupLevels() {
-		levels = new Level[5];
+		levels = new Level[1];
 		
 		levels[0] = new Level("The Attack");
 		
@@ -954,7 +980,7 @@ public class World {
 		levels[0].background = assets().getImage("images/maps/Map1.png");
 		levels[0].initialMoney = 100;
 		levels[0].grid = new Object[20][29];
-		levels[0].waveDelay = new float[] { 30000 };
+		levels[0].waveDelay = new float[] { 2000 };
 		levels[0].enemies = new Enemy[1][1][1];
 		levels[0].enemyCount = new int[1][1][1];
 		
@@ -1015,7 +1041,7 @@ public class World {
 		levels[0].path[0][39] = new Point(0, 16);
 		
 		//Map 2
-		
+		/*
 		levels[1] = new Level("The Attack");
 		
 		levels[1].story = "An unknown enemy is attempting to attack your northern front, defend it!";
@@ -1134,7 +1160,44 @@ public class World {
 		levels[3].path[0][13] = new Point(11, 19);
 
 		//MAP 5
+
+		levels[4] = new Level("The Attack");
 		
+		levels[4].story = "An unknown enemy is attempting to attack your northern front, defend it!";
+		levels[4].waveCount = 1;
+		levels[4].background = assets().getImage("images/maps/Map4.png");
+		levels[4].initialMoney = 100;
+		levels[4].grid = new Object[20][29];
+		levels[4].waveDelay = new float[] { 30000 };
+		levels[4].enemies = new Enemy[1][1][1];
+		levels[4].enemyCount = new int[1][1][1];
+		
+		for(Object[] o : levels[4].grid) {
+			for(int i = 0; i < o.length; ++i) {
+				o[i] = BUILDABLE;
+			}
+		}
+		
+		levels[4].enemies[0][0][0] = availableEnemies[SWIFT_SOLDIER];
+		levels[4].enemyCount[0][0][0] = 10;
+		
+		levels[4].spawn = new Point[] { new Point(2, 0) };
+		
+		levels[4].path = new Point[][] { new Point[11] };
+		
+		levels[4].path[0][0] = new Point(2, 28);
+		levels[4].path[0][1] = new Point(15, 28);
+		levels[4].path[0][2] = new Point(15, 22);
+		levels[4].path[0][3] = new Point(9, 22);
+		levels[4].path[0][4] = new Point(9, 18);
+		levels[4].path[0][5] = new Point(15, 18);
+		levels[4].path[0][6] = new Point(15, 7);
+		levels[4].path[0][7] = new Point(9, 7);
+		levels[4].path[0][8] = new Point(9, 2);
+		levels[4].path[0][9] = new Point(15, 2);
+		//end
+		levels[4].path[0][10] = new Point(15, 0);
+		*/
 	}
 	
 	public List<Enemy> getEnemiesInRange(Point p, int r) {
@@ -1160,13 +1223,17 @@ public class World {
 		return list;
 	}
 	
-	private Point pointGrid(Point p) {
+	public static Point pointGrid(Point p) {
 		int x = (int)(p.x() / 36), y = (int)(p.y() / 36);
 		
 		return new Point(x, y);
 	}
 	
-	private Point centerPointGrid(Point p) {
+	public static Point centerPointGrid(Point p) {
 		return new Point(p.y() * 36 + 36 / 2, p.x() * 36 + 36 / 2);
+	}
+	
+	public static Point reverse(Point p) {
+		return new Point(p.y(), p.x());
 	}
 }

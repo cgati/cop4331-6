@@ -61,6 +61,9 @@ public class GameOverMenuGui extends Gui {
 
 			@Override
 			public void pressEvent() {
+				GameOverMenuGui.this.hide();
+				
+				ElementDefense.getInstance().quit();
 				ElementDefense.getInstance().startGame();				
 			}
 			
@@ -71,11 +74,9 @@ public class GameOverMenuGui extends Gui {
 
 			@Override
 			public void pressEvent() {
-				hide();
+				GameOverMenuGui.this.hide();
 				
-				ElementDefense.getInstance().getOptionsGui().show();
-				
-				ElementDefense.getInstance().getOptionsGui().alert(GameOverMenuGui.this);
+				ElementDefense.getInstance().quit();
 			}
 			
 		};

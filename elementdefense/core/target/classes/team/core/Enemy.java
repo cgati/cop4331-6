@@ -81,8 +81,10 @@ public class Enemy extends Enhanceable {
 		this.health -= damage;
 	}
 	
-	public void takePreDamage(float damage) {
+	public float takePreDamage(float damage) {
 		this.estHealth -= damage;
+		
+		return damage;
 	}
 	
 	public float getMaxHealth() {
@@ -105,17 +107,17 @@ public class Enemy extends Enhanceable {
 			return;
 		}
 		
-		Point d = path[index];
+		Point d = (World.centerPointGrid(path[index]));
 		
 		Point u = d.subtract(getPosition().x(), getPosition().y());
 		
-		if(u.distance(0,0) <= 0.1f) {
+		if(u.distance(0,0) <= 3.0f) {
 			if(index + 1 < path.length) {
-				d = path[++index];
+				d = (World.centerPointGrid(path[++index]));
 				
 				u = d.subtract(getPosition().x(), getPosition().y());
 			} else {
-				position = path[path.length - 1];
+				position = World.centerPointGrid(path[path.length - 1]);
 				
 				++index;
 				
@@ -131,7 +133,7 @@ public class Enemy extends Enhanceable {
 				
 		Point r = position.add(v.x(), v.y());
 		
-		if(Math.abs(position.subtract(r.x(),r.y()).distance(0,0) - (position.subtract(u.x(),u.y()).distance(0,0) + r.subtract(u.x(),u.y()).distance(0,0))) <= 0.03f) {
+		if(Math.abs(position.subtract(r.x(),r.y()).distance(0,0) - (position.subtract(u.x(),u.y()).distance(0,0) + r.subtract(u.x(),u.y()).distance(0,0))) <= 1.0f) {
 			position = path[index++];
 		} else {
 			position = r;

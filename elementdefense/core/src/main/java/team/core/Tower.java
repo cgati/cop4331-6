@@ -197,5 +197,9 @@ public class Tower extends Enhanceable {
 	@Override
 	public void update(float delta) {
 		delay -= delta;
+		
+		if(delay < 0.0f) {
+			delay = 0.0f;
+		}
 	}
 }

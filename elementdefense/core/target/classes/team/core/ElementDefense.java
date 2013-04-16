@@ -107,6 +107,16 @@ public class ElementDefense implements Game {
 		inGame = true;
 	}
 	
+	public void startEndless() {
+		mainMenu.hide();
+		
+		currentWorld.reset();
+		
+		currentWorld.endless = true;
+		
+		inGame = true;
+	}
+	
 	public World getWorld() {
 		return currentWorld;
 	}

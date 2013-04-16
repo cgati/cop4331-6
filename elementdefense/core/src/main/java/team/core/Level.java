@@ -8,16 +8,16 @@ public class Level {
 	protected String story;
 	protected Image background;
 
-	protected Point[] spawn;
-	protected Point[][] path;
+	protected Point spawn;
+	protected Point[] path;
 	
 	protected int lives;
 	protected int waveCount;
 	protected int initialMoney;
 	protected Object[][] grid;
 	protected float[] waveDelay;
-	protected Enemy[][][] enemies;
-	protected int[][][] enemyCount;
+	protected Enemy[][] enemies;
+	protected int[][] enemyCount;
 	
 	private boolean endless;
 	
@@ -49,16 +49,16 @@ public class Level {
 		return waveDelay[wave];
 	}
 	
-	public int getEnemyCount(int spawn, int wave) {
-		return enemyCount[spawn][wave].length;
+	public int getEnemyCount(int wave, int enemy) {
+		return enemyCount[wave][enemy];
 	}
 	
-	public int getNumberOfEnemies(int spawn, int wave, int enemy) {
-		return enemyCount[spawn][wave][enemy];
+	public int getNumberOfEnemies(int wave, int enemy) {
+		return enemyCount[wave][enemy];
 	}
 	
-	public Enemy[] getWaveEnemies(int spawn, int wave) {
-		return enemies[spawn][wave];
+	public Enemy[] getWaveEnemies(int wave) {
+		return enemies[wave];
 	}
 	
 	public boolean isEndless() {

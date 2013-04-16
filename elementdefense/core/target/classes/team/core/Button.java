@@ -84,7 +84,11 @@ public abstract class Button {
 		hidden = false;
 	}
 	
-	public void mouseMove(Point p) {		
+	public void mouseMove(Point p) {
+		if(hidden) {
+			return;
+		}
+		
 		if(getBoundingBox().intersect(p)) {
 			if(getState() != PRESSED) {
 				setState(HOVER);
@@ -99,6 +103,10 @@ public abstract class Button {
 	}
 	
 	public void pointerStart(Point p) {
+		if(hidden) {
+			return;
+		}
+		
 		if(getBoundingBox().intersect(p) || getState() == PRESSED) {
 			setState(PRESSED);
 		} else {
@@ -107,6 +115,10 @@ public abstract class Button {
 	}
 	
 	public void pointerEnd(Point p) {
+		if(hidden) {
+			return;
+		}
+		
 		if(getBoundingBox().intersect(p)) {
 			setState(HOVER);
 			

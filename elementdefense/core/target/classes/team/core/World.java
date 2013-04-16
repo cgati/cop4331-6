@@ -49,7 +49,7 @@ public class World {
 	
 	private Object[][] grid;
 	
-	public static final float SPAWN_DELAY = 250;
+	public static final float SPAWN_DELAY = 500;
 	public static final float EPS = 1e-3f;
 	public static final Object BUILDABLE = new Object(), UNBUILDABLE = new Object();
 	
@@ -74,15 +74,13 @@ public class World {
 		protected Point spawn;		
 		protected List<Enemy> enemies;
 		
-		public SpawnPoint(Point spawn, Point[] path, Enemy[][] enemies, int[][] enemyCount) {
+		public SpawnPoint(Point spawn, Point[] path, Enemy[] enemies, int[] enemyCount) {
 			this.spawn = spawn;
 			this.enemies = new ArrayList<Enemy>();
 			
 			for(int i = 0; i < enemies.length; ++i) {
-				for(int j = 0; j < enemies[i].length; ++j) {
-					for(int k = 0; k < enemyCount[i][j]; ++k) {
-						this.enemies.add(new Enemy(enemies[i][j], null, path));
-					}
+				for(int k = 0; k < enemyCount[i]; ++k) {
+					this.enemies.add(new Enemy(enemies[i], null, path));
 				}
 			}
 		}
@@ -260,8 +258,6 @@ public class World {
 		
 		if(grid[y][x] instanceof Tower) {
 			selectedTower = (Tower)grid[y][x];
-			
-			gui.showSelectedMenu(selectedTower.getName());
 		} else {
 			clearSelectedTower();
 		}
@@ -313,7 +309,7 @@ public class World {
 		Tower T = getSelectedTower();
 		
 		if(!T.isSpeedUpgraded() && money >= T.getSpeedUpgradeCost()) {
-			T.upgradePower();
+			T.upgradeSpeed();
 			
 			money -= T.getSpeedUpgradeCost();
 		}		
@@ -326,7 +322,7 @@ public class World {
 		
 		Tower T = getSelectedTower();
 		
-		if(!T.isRangeUpgrade() && money >= T.getRangeUpgradeCost()) {
+		if(!T.isRangeUpgraded() && money >= T.getRangeUpgradeCost()) {
 			T.upgradeRange();
 			
 			money -= T.getRangeUpgradeCost();
@@ -419,7 +415,7 @@ public class World {
 		}
 		
 		for(Enemy E : enemies) {			
-			float s = E.healthPercentage();
+			float s = Math.max(E.healthPercentage(), 0.1f);
 			
 			if(E.isDead()) continue;
 			
@@ -434,6 +430,8 @@ public class World {
 	public void reset() {
 		state = 0;
 		speed = 1;
+		
+		endless = false;
 	}
 	
 	public void update(float delta) {
@@ -454,6 +452,8 @@ public class World {
 			delay = 0;
 			
 			level = -1;
+			
+			setupLevels();
 			
 			return;
 		}
@@ -477,14 +477,15 @@ public class World {
 			grid = levels[level].grid;
 			delay = levels[level].getWaveDelay(wave);
 			
+			fixit(levels[level].spawn, levels[level].path);
+			
 			enemies.clear();
 			projectiles.clear();
-			towers.clear();
-			
+			towers.clear();			
 			spawns.clear();
 			
-			for(int i = 0; i < levels[level].spawn.length; ++i) {
-				spawns.add(new SpawnPoint(levels[level].spawn[i], levels[level].path[i], levels[level].enemies[i], levels[level].enemyCount[i]));
+			for(int i = 0; i < levels[level].getWaveCount(); ++i) {
+				spawns.add(new SpawnPoint(levels[level].spawn, levels[level].path, levels[level].enemies[i], levels[level].enemyCount[i]));
 			}
 			
 			return;
@@ -524,11 +525,29 @@ public class World {
 			}
 		}
 		
-		if(enemies.size() == 0 && state == 4) {
-			System.out.println("LEVEL COMPLETE");
-			
+		if(enemies.size() == 0 && state == 4) {			
 			if(wave + 1 >= spawns.size()) {
 				state = 5;
+			} else {				
+				++wave;
+				
+				state = 8;
+				
+				delay = levels[level].getWaveDelay(wave);
+			}
+			
+			return;
+		}
+		
+		if(state == 8) {
+			delay -= delta;
+			
+			if(delay <= 0) {
+				gui.setSpawn(null);
+				
+				state = 3;
+			} else {			
+				gui.setSpawn(Math.round(delay / 1000.0f));
 			}
 		}
 		
@@ -536,6 +555,22 @@ public class World {
 			for(List<Enemy>[] L : collision) {
 				for(List<Enemy> list : L) {
 					list.clear();
+				}
+			}
+			
+			for(Tower H : towers) {
+				if(H.getName().equalsIgnoreCase("heart")) {
+					continue;
+				}
+				
+				for(Tower T : towers) {
+					if(H.getPosition().distance(T.getPosition()) <= 36 * 4) {
+						T.removeEnhancer(Enhancer.DAMAGE, 2.0f);
+						T.removeEnhancer(Enhancer.SPEED, 0.7f);
+						
+						T.addEnhancer(Enhancer.DAMAGE, 2.0f, 0.0f, true);
+						T.addEnhancer(Enhancer.SPEED, 0.7f, 0.0f, true);
+					}
 				}
 			}
 			
@@ -561,6 +596,12 @@ public class World {
 				} else {
 					--lives;
 					
+					if(lives <= 0) {
+						state = 7;
+						
+						return;
+					}
+					
 					E.setHealth(0);
 					
 					enemyIterator.remove();
@@ -584,7 +625,7 @@ public class World {
 					if(P.getSource().getProjectileName().equals("fireball")) {
 						List<Enemy> enemies = getEnemiesInRange(pointGrid(P.getPosition()), 2);
 						
-						P.getTarget().takeDamage(P.getDamage() - P.getTarget().getDefense());
+						P.getTarget().takeDamage(P.getDamage());
 						
 						enemyIterator = enemies.iterator();
 						
@@ -592,8 +633,8 @@ public class World {
 							Enemy E = enemyIterator.next();
 							
 							if(E != P.getTarget()) {
-								E.takeDamage(P.getDamage() * 0.2f - E.getDefense());
-								E.takePreDamage(P.getDamage() * 0.2f - E.getDefense());
+								E.takeDamage(P.getDamage() * 0.2f);
+								E.takePreDamage(P.getDamage() * 0.2f);
 							}
 							
 							if(E.isDead()) {
@@ -605,7 +646,7 @@ public class World {
 					} else if(P.getSource().getProjectileName().equals("rock")) {
 						List<Enemy> enemies = getEnemiesInRange(pointGrid(P.getPosition()), 1);
 						
-						P.getTarget().takeDamage(P.getDamage() - P.getTarget().getDefense());
+						P.getTarget().takeDamage(P.getDamage());
 						
 						enemyIterator = enemies.iterator();
 						
@@ -613,8 +654,8 @@ public class World {
 							Enemy E = enemyIterator.next();
 							
 							if(E != P.getTarget()) {
-								E.takeDamage(P.getDamage() * 0.65f - E.getDefense());
-								E.takePreDamage(P.getDamage() * 0.65f - E.getDefense());
+								E.takeDamage(P.getDamage() * 0.65f);
+								E.takePreDamage(P.getDamage() * 0.65f);
 							}
 							
 							if(E.isDead()) {
@@ -626,7 +667,7 @@ public class World {
 					} else if(P.getSource().getProjectileName().equals("bubble")) {
 						List<Enemy> enemies = getEnemiesInRange(pointGrid(P.getPosition()), 3);
 						
-						P.getTarget().takeDamage(P.getDamage() - P.getTarget().getDefense());
+						P.getTarget().takeDamage(P.getDamage());
 						
 						enemyIterator = enemies.iterator();
 						
@@ -634,8 +675,8 @@ public class World {
 							Enemy E = enemyIterator.next();
 							
 							if(E != P.getTarget()) {
-								E.takeDamage(P.getDamage() * 0.1f - E.getDefense());
-								E.takePreDamage(P.getDamage() * 0.1f - E.getDefense());
+								E.takeDamage(P.getDamage() * 0.1f);
+								E.takePreDamage(P.getDamage() * 0.1f);
 							}
 							
 							if(E.isDead()) {
@@ -708,7 +749,9 @@ public class World {
 							E = list.get((int)(PlayN.random() * list.size()));
 						}
 						
-						Projectile P = new Projectile(projectileMap.get(T.getProjectileName()), T.getPosition(), list.get(0), T, d);
+						d = Math.max(d, 0.0f);
+												
+						Projectile P = new Projectile(projectileMap.get(T.getProjectileName()), T.getPosition().add(36 / 2, 36 / 2), list.get(0), T, d);
 						
 						projectiles.add(P);
 						
@@ -725,7 +768,8 @@ public class World {
 		gui.setSpeed(getSpeedText());
 		
 		if(getSelectedTower() != null) {
-			gui.setName(getSelectedTower().getName());
+			gui.setName(getSelectedTower().getName());			
+			gui.showSelectedMenu(selectedTower.getName());
 		}
 	}
 	
@@ -800,9 +844,11 @@ public class World {
 		fireTemplate.upgradeName = "Inferno";
 		fireTemplate.powerUpgraded = false;
 		fireTemplate.speedUpgraded = false;
-		fireTemplate.upgradeCost = 10;
-		fireTemplate.powerUpgradeCost = 0;
-		fireTemplate.speedUpgradeCost = 0;
+		fireTemplate.rangeUpgraded = false;
+		fireTemplate.upgradeCost = 50;
+		fireTemplate.powerUpgradeCost = 20;
+		fireTemplate.speedUpgradeCost = 20;
+		fireTemplate.rangeUpgradeCost = 30;
 		fireTemplate.projectileName = "fireball";
 		
 		fireTemplate.sprite = fireImage;
@@ -823,9 +869,11 @@ public class World {
 		earthTemplate.upgradeName = "Earthquake";
 		earthTemplate.powerUpgraded = false;
 		earthTemplate.speedUpgraded = false;
-		earthTemplate.upgradeCost = 10;
-		earthTemplate.powerUpgradeCost = 0;
-		earthTemplate.speedUpgradeCost = 0;
+		earthTemplate.rangeUpgraded = false;
+		earthTemplate.upgradeCost = 50;
+		earthTemplate.powerUpgradeCost = 20;
+		earthTemplate.speedUpgradeCost = 20;
+		earthTemplate.speedUpgradeCost = 30;
 		earthTemplate.projectileName = "rock";
 		
 		earthTemplate.sprite = earthImage;
@@ -846,9 +894,10 @@ public class World {
 		waterTemplate.upgradeName = "Tsunami";
 		waterTemplate.powerUpgraded = false;
 		waterTemplate.speedUpgraded = false;
-		waterTemplate.upgradeCost = 10;
-		waterTemplate.powerUpgradeCost = 0;
-		waterTemplate.speedUpgradeCost = 0;
+		waterTemplate.upgradeCost = 50;
+		waterTemplate.powerUpgradeCost = 20;
+		waterTemplate.speedUpgradeCost = 20;
+		waterTemplate.rangeUpgradeCost = 30;
 		waterTemplate.projectileName = "bubble";
 		
 		waterTemplate.sprite = waterImage;
@@ -869,9 +918,10 @@ public class World {
 		windTemplate.upgradeName = "Cyclone";
 		windTemplate.powerUpgraded = false;
 		windTemplate.speedUpgraded = false;
-		windTemplate.upgradeCost = 10;
-		windTemplate.powerUpgradeCost = 0;
-		windTemplate.speedUpgradeCost = 0;
+		windTemplate.upgradeCost = 50;
+		windTemplate.powerUpgradeCost = 20;
+		windTemplate.speedUpgradeCost = 20;
+		windTemplate.rangeUpgradeCost = 30;
 		windTemplate.projectileName = "air";
 		
 		windTemplate.sprite = windImage;
@@ -888,13 +938,14 @@ public class World {
 		heartTemplate.first = true;
 		heartTemplate.cost = 25;
 		heartTemplate.totalCost = 0;
-		heartTemplate.upgraded = false;
+		heartTemplate.upgraded = true;
 		heartTemplate.upgradeName = null;
-		heartTemplate.powerUpgraded = false;
-		heartTemplate.speedUpgraded = false;
-		heartTemplate.upgradeCost = 10;
-		heartTemplate.powerUpgradeCost = 0;
-		heartTemplate.speedUpgradeCost = 0;
+		heartTemplate.powerUpgraded = true;
+		heartTemplate.speedUpgraded = true;
+		heartTemplate.upgradeCost = 50;
+		heartTemplate.powerUpgradeCost = 20;
+		heartTemplate.speedUpgradeCost = 20;
+		heartTemplate.rangeUpgradeCost = 30;
 		heartTemplate.projectileName = null;
 		
 		heartTemplate.sprite = heartImage;
@@ -960,7 +1011,7 @@ public class World {
 		
 		availableEnemies[4] = new Enemy("Armored Carrier");
 		
-		availableEnemies[4].speed = 8.0f;
+		availableEnemies[4].speed = 40.0f;
 		availableEnemies[4].defense = 8;
 		availableEnemies[4].bounty = 5;
 		availableEnemies[4].maxHealth = 100;
@@ -971,18 +1022,105 @@ public class World {
 	}
 	
 	private void setupLevels() {
+		if(endless) {			
+			levels = new Level[1];
+			
+			levels[0] = new Level("The Attack");
+			
+			levels[0].story = "An unknown enemy is attempting to attack your northern front, defend it!";
+			levels[0].waveCount = 5;
+			levels[0].lives = 20;
+			levels[0].background = assets().getImage("images/maps/Map1.png");
+			levels[0].initialMoney = 10;
+			levels[0].grid = new Object[20][29];
+			levels[0].waveDelay = new float[] { 30000, 30000, 30000, 30000, 30000 };
+			levels[0].enemies = new Enemy[5][1]; // 5 waves, 1 enemy type each wave
+			levels[0].enemyCount = new int[5][1]; // 5 waves, 1 enemy 'count' for each type
+			
+			for(Object[] o : levels[0].grid) {
+				for(int i = 0; i < o.length; ++i) {
+					o[i] = BUILDABLE;
+				}
+			}
+			
+			levels[0].enemies[0][0] = availableEnemies[this.SWIFT_SOLDIER];
+			levels[0].enemyCount[0][0] = 10000;
+			
+			levels[0].enemies[1][0] = availableEnemies[this.MARINE];
+			levels[0].enemyCount[1][0] = 10000;
+			
+			levels[0].enemies[2][0] = availableEnemies[this.ARMORED_SOLDIER];
+			levels[0].enemyCount[2][0] = 10000;
+			
+			levels[0].enemies[3][0] = availableEnemies[this.SWIFT_CARRIER];
+			levels[0].enemyCount[3][0] = 10000;
+			
+			levels[0].enemies[4][0] = availableEnemies[this.ARMORED_CARRIER];
+			levels[0].enemyCount[4][0] = 10000;
+			
+			levels[0].spawn = new Point(3, 0);
+			
+			levels[0].path = new Point[40];
+			
+			levels[0].path[0] = new Point(3, 3);
+			levels[0].path[1] = new Point(6, 3);
+			levels[0].path[2] = new Point(6, 5);
+			levels[0].path[3] = new Point(9, 5);
+			levels[0].path[4] = new Point(9, 7);
+			levels[0].path[5] = new Point(12, 7);
+			levels[0].path[6] = new Point(12, 9);
+			levels[0].path[7] = new Point(15, 9);
+			levels[0].path[8] = new Point(15, 11);
+			levels[0].path[9] = new Point(18, 11);
+			levels[0].path[10] = new Point(18, 15);
+			levels[0].path[11] = new Point(14, 15);
+			levels[0].path[12] = new Point(14, 13);
+			levels[0].path[13] = new Point(11, 13);
+			levels[0].path[14] = new Point(11, 11);
+			levels[0].path[15] = new Point(8, 11);
+			levels[0].path[16] = new Point(8, 9);
+			levels[0].path[17] = new Point(5, 9);
+			levels[0].path[18] = new Point(5, 7);
+			levels[0].path[19] = new Point(1, 7);
+			levels[0].path[20] = new Point(1, 12);
+			levels[0].path[21] = new Point(4, 12);
+			levels[0].path[22] = new Point(4, 14);
+			levels[0].path[23] = new Point(7, 14);
+			levels[0].path[24] = new Point(7, 16);
+			levels[0].path[25] = new Point(10, 16);
+			levels[0].path[26] = new Point(10, 18);
+			levels[0].path[27] = new Point(13, 18);
+			levels[0].path[28] = new Point(13, 20);
+			levels[0].path[29] = new Point(16, 20);
+			levels[0].path[30] = new Point(16, 24);
+			levels[0].path[31] = new Point(12, 24);
+			levels[0].path[32] = new Point(12, 22);
+			levels[0].path[33] = new Point(9, 22);
+			levels[0].path[34] = new Point(9, 20);
+			levels[0].path[35] = new Point(6, 20);
+			levels[0].path[36] = new Point(6, 18);
+			levels[0].path[37] = new Point(3, 18);
+			levels[0].path[38] = new Point(3, 16);
+			
+			// End
+			levels[0].path[39] = new Point(0, 16);
+			
+			return;
+		}
+		
 		levels = new Level[1];
 		
 		levels[0] = new Level("The Attack");
 		
 		levels[0].story = "An unknown enemy is attempting to attack your northern front, defend it!";
-		levels[0].waveCount = 1;
+		levels[0].waveCount = 2;
+		levels[0].lives = 10;
 		levels[0].background = assets().getImage("images/maps/Map1.png");
 		levels[0].initialMoney = 100;
 		levels[0].grid = new Object[20][29];
-		levels[0].waveDelay = new float[] { 2000 };
-		levels[0].enemies = new Enemy[1][1][1];
-		levels[0].enemyCount = new int[1][1][1];
+		levels[0].waveDelay = new float[] { 2000, 30000 };
+		levels[0].enemies = new Enemy[2][1];
+		levels[0].enemyCount = new int[2][1];
 		
 		for(Object[] o : levels[0].grid) {
 			for(int i = 0; i < o.length; ++i) {
@@ -990,55 +1128,58 @@ public class World {
 			}
 		}
 		
-		levels[0].enemies[0][0][0] = availableEnemies[SWIFT_SOLDIER];
-		levels[0].enemyCount[0][0][0] = 10;
+		levels[0].enemies[0][0] = availableEnemies[SWIFT_SOLDIER];
+		levels[0].enemyCount[0][0] = 10;
 		
-		levels[0].spawn = new Point[] { new Point(3, 0) };
+		levels[0].enemies[1][0] = availableEnemies[ARMORED_CARRIER];
+		levels[0].enemyCount[1][0] = 1;
 		
-		levels[0].path = new Point[][] { new Point[40] };
+		levels[0].spawn = new Point(3, 0);
 		
-		levels[0].path[0][0] = new Point(3, 3);
-		levels[0].path[0][1] = new Point(6, 3);
-		levels[0].path[0][2] = new Point(6, 5);
-		levels[0].path[0][3] = new Point(9, 5);
-		levels[0].path[0][4] = new Point(9, 7);
-		levels[0].path[0][5] = new Point(12, 7);
-		levels[0].path[0][6] = new Point(12, 9);
-		levels[0].path[0][7] = new Point(15, 9);
-		levels[0].path[0][8] = new Point(15, 11);
-		levels[0].path[0][9] = new Point(18, 11);
-		levels[0].path[0][10] = new Point(18, 15);
-		levels[0].path[0][11] = new Point(14, 15);
-		levels[0].path[0][12] = new Point(14, 13);
-		levels[0].path[0][13] = new Point(11, 13);
-		levels[0].path[0][14] = new Point(11, 11);
-		levels[0].path[0][15] = new Point(8, 11);
-		levels[0].path[0][16] = new Point(8, 9);
-		levels[0].path[0][17] = new Point(5, 9);
-		levels[0].path[0][18] = new Point(5, 7);
-		levels[0].path[0][19] = new Point(1, 7);
-		levels[0].path[0][20] = new Point(1, 12);
-		levels[0].path[0][21] = new Point(4, 12);
-		levels[0].path[0][22] = new Point(4, 14);
-		levels[0].path[0][23] = new Point(7, 14);
-		levels[0].path[0][24] = new Point(7, 16);
-		levels[0].path[0][25] = new Point(10, 16);
-		levels[0].path[0][26] = new Point(10, 18);
-		levels[0].path[0][27] = new Point(13, 18);
-		levels[0].path[0][28] = new Point(13, 20);
-		levels[0].path[0][29] = new Point(16, 20);
-		levels[0].path[0][30] = new Point(16, 24);
-		levels[0].path[0][31] = new Point(12, 24);
-		levels[0].path[0][32] = new Point(12, 22);
-		levels[0].path[0][33] = new Point(9, 22);
-		levels[0].path[0][34] = new Point(9, 20);
-		levels[0].path[0][35] = new Point(6, 20);
-		levels[0].path[0][36] = new Point(6, 18);
-		levels[0].path[0][37] = new Point(3, 18);
-		levels[0].path[0][38] = new Point(3, 16);
+		levels[0].path = new Point[40];
+		
+		levels[0].path[0] = new Point(3, 3);
+		levels[0].path[1] = new Point(6, 3);
+		levels[0].path[2] = new Point(6, 5);
+		levels[0].path[3] = new Point(9, 5);
+		levels[0].path[4] = new Point(9, 7);
+		levels[0].path[5] = new Point(12, 7);
+		levels[0].path[6] = new Point(12, 9);
+		levels[0].path[7] = new Point(15, 9);
+		levels[0].path[8] = new Point(15, 11);
+		levels[0].path[9] = new Point(18, 11);
+		levels[0].path[10] = new Point(18, 15);
+		levels[0].path[11] = new Point(14, 15);
+		levels[0].path[12] = new Point(14, 13);
+		levels[0].path[13] = new Point(11, 13);
+		levels[0].path[14] = new Point(11, 11);
+		levels[0].path[15] = new Point(8, 11);
+		levels[0].path[16] = new Point(8, 9);
+		levels[0].path[17] = new Point(5, 9);
+		levels[0].path[18] = new Point(5, 7);
+		levels[0].path[19] = new Point(1, 7);
+		levels[0].path[20] = new Point(1, 12);
+		levels[0].path[21] = new Point(4, 12);
+		levels[0].path[22] = new Point(4, 14);
+		levels[0].path[23] = new Point(7, 14);
+		levels[0].path[24] = new Point(7, 16);
+		levels[0].path[25] = new Point(10, 16);
+		levels[0].path[26] = new Point(10, 18);
+		levels[0].path[27] = new Point(13, 18);
+		levels[0].path[28] = new Point(13, 20);
+		levels[0].path[29] = new Point(16, 20);
+		levels[0].path[30] = new Point(16, 24);
+		levels[0].path[31] = new Point(12, 24);
+		levels[0].path[32] = new Point(12, 22);
+		levels[0].path[33] = new Point(9, 22);
+		levels[0].path[34] = new Point(9, 20);
+		levels[0].path[35] = new Point(6, 20);
+		levels[0].path[36] = new Point(6, 18);
+		levels[0].path[37] = new Point(3, 18);
+		levels[0].path[38] = new Point(3, 16);
 		
 		// End
-		levels[0].path[0][39] = new Point(0, 16);
+		levels[0].path[39] = new Point(0, 16);
 		
 		//Map 2
 		/*
@@ -1070,11 +1211,11 @@ public class World {
 		levels[1].path[0][1] = new Point(17, 4);
 		levels[1].path[0][2] = new Point(17, 24);
 		levels[1].path[0][3] = new Point(4, 24);
-		levels[1].path[0][4] = new Point(4, 11);
-		levels[1].path[0][5] = new Point(10, 11);
-		levels[1].path[0][6] = new Point(10, 20);	
-		levels[1].path[0][7] = new Point(15, 20);	
-		levels[1].path[0][8] = new Point(15, 8);
+		levels[1].path[0][4] = new Point(4, 11);	
+		levels[1].path[0][5] = new Point(9, 11);
+ 	 	levels[1].path[0][6] = new Point(9, 20); 
+ 	 	levels[1].path[0][7] = new Point(14, 20); 
+ 		levels[1].path[0][8] = new Point(14, 8);
 		levels[1].path[0][9] = new Point(1, 8);
 		// End
 		levels[1].path[0][10] = new Point(1, 28);
@@ -1221,6 +1362,51 @@ public class World {
 		}
 		
 		return list;
+	}
+	
+	private void fixit(Point spawn, Point[] path) {
+		go(spawn, path[0]);
+		
+		for(int i = 0; i < path.length; ++i) {
+			if(i + 1 < path.length) {
+				go(path[i], path[i + 1]);
+			}
+		}
+	}
+	
+	private void go(Point a, Point b) {
+		int dx = 0, dy = 0;
+		
+		if(a.x() > b.x()) {
+			dx = -1;
+		} else if(a.x() < b.x()) {
+			dx = 1;
+		}
+		
+		if(a.y() > b.y()) {
+			dy = -1;
+		} else if(a.y() < b.y()) {
+			dy = 1;
+		}
+		
+		int x0 = (int)a.x();
+		int y0 = (int)a.y();
+		int x1 = (int)b.x();
+		int y1 = (int)b.y();
+		
+		if(dx != 0) {
+			for(int i = Math.min(x0, x1); i < Math.max(x0, x1); ++i) {
+				grid[i][y0] = UNBUILDABLE;
+			}
+		}
+		
+		if(dy != 0) {
+			for(int i = Math.min(y0, y1); i < Math.max(y0, y1); ++i) {
+				grid[x0][i] = UNBUILDABLE;
+			}
+		}
+		
+		grid[x1][y1] = UNBUILDABLE;
 	}
 	
 	public static Point pointGrid(Point p) {

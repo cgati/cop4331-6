@@ -87,11 +87,7 @@ public class MainMenuGui extends Gui {
 
 			@Override
 			public void pressEvent() {
-				// hide();
-				
-				// ElementDefense.getInstance().getOptionsGui().show();
-				
-				// ElementDefense.getInstance().getOptionsGui().alert(MainMenuGui.this);
+				ElementDefense.getInstance().startEndless();
 			}
 			
 		};

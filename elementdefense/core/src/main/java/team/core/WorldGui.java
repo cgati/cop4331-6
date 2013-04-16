@@ -319,14 +319,20 @@ public class WorldGui extends Gui {
 	}
 	
 	public void showSelectedMenu(String name) {
+		hideSelectedMenu();
+		
 		setName(name);
 		
 		nameLabel.show();
 		sellTower.show();
 		moveTower.show();
+		if(!ElementDefense.getInstance().getWorld().getSelectedTower().isPowerUpgraded())
 		upgradePower.show();
+		if(!ElementDefense.getInstance().getWorld().getSelectedTower().isSpeedUpgraded())
 		upgradeSpeed.show();
+		if(!ElementDefense.getInstance().getWorld().getSelectedTower().isRangeUpgraded())
 		upgradeRange.show();
+		if(!ElementDefense.getInstance().getWorld().getSelectedTower().isUpgraded())
 		upgradeTower.show();
 	}
 	

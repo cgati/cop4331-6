@@ -78,11 +78,15 @@ public class Enemy extends Enhanceable {
 	}
 	
 	public void takeDamage(float damage) {
-		this.health -= damage;
+		if(damage > 0) {
+			this.health -= damage;
+		}
 	}
 	
 	public float takePreDamage(float damage) {
-		this.estHealth -= damage;
+		if(damage > 0) {
+			this.estHealth -= damage;
+		}
 		
 		return damage;
 	}

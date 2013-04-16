@@ -162,7 +162,7 @@ public class Tower extends Enhanceable {
 		addEnhancer(Enhancer.SPEED, 0.8f, 0.0f, true);
 	}
 	
-	public boolean isRangeUpgrade() {
+	public boolean isRangeUpgraded() {
 		return rangeUpgraded;
 	}
 	
@@ -173,7 +173,9 @@ public class Tower extends Enhanceable {
 	public void upgradeRange() {
 		rangeUpgraded = true;
 		
-		addEnhancer(Enhancer.RANGE, 2.0f, 0.0f, true);
+		totalCost += rangeUpgradeCost;
+		
+		addEnhancer(Enhancer.RANGE, (getRange()+1)/getRange()+0.1f, 0.0f, true);
 	}
 	
 	public void move(Point position) {

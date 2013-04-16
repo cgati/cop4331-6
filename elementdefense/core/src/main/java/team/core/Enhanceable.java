@@ -31,7 +31,7 @@ public abstract class Enhanceable extends ElementObject {
 			
 			E.setDuration(E.getDuration() - delta);
 			
-			if(E.getDuration() <= World.EPS) {
+			if(E.getDuration() < 0) {
 				iterator.remove();
 			}
 		}
@@ -39,6 +39,44 @@ public abstract class Enhanceable extends ElementObject {
 	
 	public void addEnhancer(int type, float scalar, float duration) {
 		enhancers.add(new Enhancer(type, scalar, duration));
+	}
+	
+	public void addEnhancer(int type, float scalar, float duration, boolean permanent) {
+		Enhancer E = new Enhancer(type, scalar, duration);
+		
+		if(permanent) {
+			E.permanent();
+		}
+		
+		enhancers.add(E);
+	}
+	
+	public void removeEnhancer(int type, float scalar) {
+		Iterator<Enhancer> iterator = enhancers.iterator();
+		
+		while(iterator.hasNext()) {
+			Enhancer E = iterator.next();
+			
+			if(E.getType() == type && Math.abs(E.getScalar() - scalar) <= World.EPS) {
+				iterator.remove();
+				
+				break;
+			}
+		}
+	}
+	
+	public boolean hasEnhancer(int type, float scalar) {
+		Iterator<Enhancer> iterator = enhancers.iterator();
+		
+		while(iterator.hasNext()) {
+			Enhancer E = iterator.next();
+			
+			if(E.getType() == type && Math.abs(E.getScalar() - scalar) <= World.EPS) {
+				return true;
+			}
+		}
+		
+		return false;
 	}
 	
 	public float getPowerMultiplier() {

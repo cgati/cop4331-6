@@ -13,6 +13,7 @@ public class Enhancer {
 	public Enhancer(int type, float scalar, float duration) {
 		this.type = type;
 		this.scalar = scalar;
+		this.duration = duration;
 	}
 	
 	public int getType() {

@@ -3,16 +3,29 @@ package team.core;
 import pythagoras.f.Point;
 
 public class Projectile extends ElementObject {
-	private final float speed = 8.0f;
+	private final float speed = 5.0f;
 	
 	private Enemy target;
 	private Tower source;
+	private float damage;
 	
-	public Projectile(Point position, Enemy target, Tower source) {
-		super("projectile", position);
+	public Projectile() {
+		super("projectile", null);
 	}
 	
-	public void update(float delta) {		
+	public Projectile(Projectile template, Point position, Enemy target, Tower source, float damage) {
+		super("projectile", position);
+		
+		this.target = target;
+		this.source = source;
+		this.damage = damage;
+		
+		this.sprite = template.sprite;
+		this.spawnSound = template.spawnSound;
+		this.despawnSound = template.despawnSound;
+	}
+	
+	public void update(float delta) {
 		Point u = target.getPosition().subtract(getPosition().x(), getPosition().y());
 		
 		u = u.mult(1.0f/u.distance(0,0));
@@ -30,8 +43,10 @@ public class Projectile extends ElementObject {
 		}
 	}
 	
-	public boolean hasHitTarget() {
-		return target.getPosition().distance(getPosition()) <= 0.03;
+	public boolean hasHitTarget() {		
+		float d = target.getPosition().distance(getPosition());
+		
+		return Math.abs(d - 0.1f) <= 1e-2 || d < 0.1f;
 	}
 	
 	public Enemy getTarget() {

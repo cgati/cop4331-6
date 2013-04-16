@@ -278,6 +278,14 @@ public class WorldGui extends Gui {
 		hideSelectedMenu();
 	}
 	
+	public void setSpawn(Integer spawn) {
+		if(spawn == null) {
+			spawnLabel.setText("Spawn In: -");
+		} else {
+			spawnLabel.setText("Spawn In: " + spawn);
+		}
+	}
+	
 	public void setMoney(int money) {
 		moneyLabel.setText("Money: " + money);
 	}

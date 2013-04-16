@@ -8,11 +8,11 @@ import playn.core.Pointer.Event;
 import playn.core.Pointer.Listener;
 import pythagoras.f.Point;
 
-public class MainMenuGui extends Gui {
-	private Image mainMenuImage;
-	private Button playButton, endlessButton, optionsButton;
+public class GameOverMenuGui extends Gui {
+	private Image gameOverImage;
+	private Button replayButton, menuButton;
 
-	public MainMenuGui(SurfaceLayer layer) {
+	public GameOverMenuGui(SurfaceLayer layer) {
 		super(layer);
 		
 		layer.addListener(new Listener() {
@@ -25,9 +25,8 @@ public class MainMenuGui extends Gui {
 				
 				Point p = new Point(event.localX(), event.localY());
 				
-				playButton.pointerStart(p);
-				optionsButton.pointerStart(p);
-				endlessButton.pointerStart(p);
+				replayButton.pointerStart(p);
+				menuButton.pointerStart(p);
 			}
 
 			@Override
@@ -39,9 +38,8 @@ public class MainMenuGui extends Gui {
 				
 				Point p = new Point(event.localX(), event.localY());
 				
-				playButton.pointerEnd(p);
-				optionsButton.pointerEnd(p);
-				endlessButton.pointerEnd(p);
+				replayButton.pointerEnd(p);
+				menuButton.pointerEnd(p);
 			}
 
 			@Override
@@ -59,7 +57,7 @@ public class MainMenuGui extends Gui {
 		Interval2D i2d;
 		
 		i2d = new Interval2D(new Point(280, 430), 200, 75);
-		playButton = new Button(i2d) {
+		replayButton = new Button(i2d) {
 
 			@Override
 			public void pressEvent() {
@@ -69,7 +67,7 @@ public class MainMenuGui extends Gui {
 		};
 
 		i2d = new Interval2D(new Point(800, 430), 200, 75);
-		optionsButton = new Button(i2d) {
+		menuButton = new Button(i2d) {
 
 			@Override
 			public void pressEvent() {
@@ -77,26 +75,12 @@ public class MainMenuGui extends Gui {
 				
 				ElementDefense.getInstance().getOptionsGui().show();
 				
-				ElementDefense.getInstance().getOptionsGui().alert(MainMenuGui.this);
+				ElementDefense.getInstance().getOptionsGui().alert(GameOverMenuGui.this);
 			}
 			
 		};
 		
-		i2d = new Interval2D(new Point(540, 430), 200, 75);
-		endlessButton = new Button(i2d) {
-
-			@Override
-			public void pressEvent() {
-				// hide();
-				
-				// ElementDefense.getInstance().getOptionsGui().show();
-				
-				// ElementDefense.getInstance().getOptionsGui().alert(MainMenuGui.this);
-			}
-			
-		};
-		
-		mainMenuImage = assets().getImage("images/MainMenu.png");
+		gameOverImage = assets().getImage("images/GameOver.png");
 	}
 	
 	public void mouseMove(Point p) {
@@ -104,9 +88,8 @@ public class MainMenuGui extends Gui {
 			return;
 		}
 		
-		playButton.mouseMove(p);
-		optionsButton.mouseMove(p);
-		endlessButton.mouseMove(p);
+		replayButton.mouseMove(p);
+		menuButton.mouseMove(p);
 	}
 
 	@Override
@@ -115,11 +98,10 @@ public class MainMenuGui extends Gui {
 			return;
 		}
 		
-		surface.drawImage(mainMenuImage, 0, 0);
+		surface.drawImage(gameOverImage, 0, 0);
 		
-		playButton.paint(alpha, surface);
-		optionsButton.paint(alpha, surface);
-		endlessButton.paint(alpha, surface);
+		replayButton.paint(alpha, surface);
+		menuButton.paint(alpha, surface);
 	}
 
 }

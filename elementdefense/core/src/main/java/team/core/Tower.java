@@ -51,7 +51,7 @@ public class Tower extends Enhanceable {
 		this.power = template.power;
 		this.range = template.range;
 		this.speed = template.speed;
-		this.delay = template.delay;
+		this.delay = 0;
 		this.cost = template.cost;
 		this.totalCost = template.totalCost + template.cost;
 		this.upgraded = template.upgraded;
@@ -102,7 +102,7 @@ public class Tower extends Enhanceable {
 	public void setDelay(float delay) {
 		this.delay = delay;
 	}
-		
+	
 	public boolean isUpgraded() {
 		return upgraded;
 	}
@@ -120,7 +120,14 @@ public class Tower extends Enhanceable {
 	}
 	
 	public void upgrade() {
-		// TODO
+		name = upgradeName;
+		
+		upgraded = true;
+		
+		totalCost += upgradeCost;
+		
+		addEnhancer(Enhancer.DAMAGE, 1.5f, 0.0f, true);
+		addEnhancer(Enhancer.SPEED, 0.8f, 0.0f, true);
 	}
 	
 	public boolean isPowerUpgraded() {
@@ -132,7 +139,11 @@ public class Tower extends Enhanceable {
 	}
 	
 	public void upgradePower() {
-		// TODO
+		powerUpgraded = true;
+		
+		totalCost += powerUpgradeCost;
+		
+		addEnhancer(Enhancer.DAMAGE, 1.5f, 0.0f, true);
 	}
 	
 	public boolean isSpeedUpgraded() {
@@ -144,7 +155,11 @@ public class Tower extends Enhanceable {
 	}
 	
 	public void upgradeSpeed() {
-		// TODO
+		speedUpgraded = true;
+		
+		totalCost += speedUpgradeCost;
+		
+		addEnhancer(Enhancer.SPEED, 0.8f, 0.0f, true);
 	}
 	
 	public boolean isRangeUpgrade() {
@@ -156,7 +171,9 @@ public class Tower extends Enhanceable {
 	}
 	
 	public void upgradeRange() {
-		// TODO
+		rangeUpgraded = true;
+		
+		addEnhancer(Enhancer.RANGE, 2.0f, 0.0f, true);
 	}
 	
 	public void move(Point position) {

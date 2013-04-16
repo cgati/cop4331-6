@@ -2,6 +2,8 @@ package team.core;
 
 import static playn.core.PlayN.*;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +11,7 @@ import java.util.TreeMap;
 import java.util.ArrayList;
 
 import playn.core.Image;
+import playn.core.PlayN;
 import playn.core.Pointer.Event;
 import playn.core.Pointer.Listener;
 import playn.core.Surface;
@@ -50,7 +53,10 @@ public class World {
 	public static final float EPS = 1e-3f;
 	public static final Object BUILDABLE = new Object(), UNBUILDABLE = new Object();
 	
+	protected boolean endless;
+	
 	private Map<String, Tower> templateMap;
+	private Map<String, Projectile> projectileMap;
 	
 	private Tower fireTemplate, heartTemplate, earthTemplate, waterTemplate, windTemplate;
 	
@@ -58,7 +64,7 @@ public class World {
 	private boolean isMovingTower;
 	private boolean isPlacingTower;
 	
-	private Image map, placementGrid;
+	private Image map, placementGrid, levelComplete;
 	
 	private boolean finished;
 	
@@ -114,7 +120,13 @@ public class World {
 			public void onPointerEnd(Event event) {
 				// TODO Auto-generated method stub
 				
-				if(state != 2) {
+				if(state == 5) {
+					state = 1;
+					
+					return;
+				}
+				
+				if(state < 2 || state == 6) {
 					return;
 				}
 				
@@ -154,6 +166,7 @@ public class World {
 		boundingBox = new Interval2D(new Point(0,0), 1044 -1 , 720 - 1);
 		
 		placementGrid = assets().getImage("images/maps/Grid.png");
+		levelComplete = assets().getImage("images/Level Complete.png");
 		
 		gui = new WorldGui(layer);
 		
@@ -395,6 +408,16 @@ public class World {
 			return;
 		}
 		
+		if(state == 5) {
+			surface.drawImage(levelComplete, 0, 0);
+			
+			return;
+		}
+		
+		if(state == 7) {
+			return;
+		}
+		
 		gui.paint(alpha);
 		
 		surface.drawImage(map, 0, 0);
@@ -414,16 +437,25 @@ public class World {
 		}
 		
 		for(Enemy E : enemies) {			
-			surface.drawImage(E.getSprite(), centerPointGrid(E.getPosition()).x() - E.getSprite().width() / 2, centerPointGrid(E.getPosition()).y() - E.getSprite().height() / 2);
+			float s = E.healthPercentage();
+			
+			surface.drawImage(E.getSprite(), centerPointGrid(E.getPosition()).x() - (s * E.getSprite().width()) / 2, centerPointGrid(E.getPosition()).y() - (s * E.getSprite().height()) / 2, E.getSprite().width() * s, E.getSprite().height() * s);
+		}
+		
+		for(Projectile P : projectiles) {
+			surface.drawImage(P.getSprite(), centerPointGrid(P.getPosition()).x() - P.getSprite().width() / 2, centerPointGrid(P.getPosition()).y() - P.getSprite().height() / 2);
 		}
 	}
 	
 	public void update(float delta) {
+		if(state == 7) {
+			return;
+		}
+		
 		if(state == 0) {
 			state = 1;
 			
 			delay = 0;
-			// delay = 15000;
 			
 			level = -1;
 			
@@ -431,90 +463,232 @@ public class World {
 		}
 		
 		if(state == 1) {
-			delay -= delta;
+			if(level > levels.length) {
+				state = 7;
+				
+				return;
+			}
 			
-			if(delay <= EPS) {
-				state = 2;
-				
-				++level;
-				
-				map = levels[level].background;
-				lives = levels[level].lives;
-				money = levels[level].initialMoney;
-				grid = levels[level].grid;
-				wave = enemy = enemyIndex = 0;
-				
-				enemies.clear();
-				projectiles.clear();
-				towers.clear();
-				
-				spawns.clear();
-				
-				for(int i = 0; i < levels[level].spawn.length; ++i) {
-					spawns.add(new SpawnPoint(levels[level].spawn[i], levels[level].path[i], levels[level].enemies[i], levels[level].enemyCount[i]));
-				}
+			state = 2;
+			delay = 3000;
+			
+			++level;
+			
+			map = levels[level].background;
+			lives = levels[level].lives;
+			money = levels[level].initialMoney;
+			grid = levels[level].grid;
+			wave = enemy = enemyIndex = 0;
+			
+			enemies.clear();
+			projectiles.clear();
+			towers.clear();
+			
+			spawns.clear();
+			
+			for(int i = 0; i < levels[level].spawn.length; ++i) {
+				spawns.add(new SpawnPoint(levels[level].spawn[i], levels[level].path[i], levels[level].enemies[i], levels[level].enemyCount[i]));
 			}
 			
 			return;
 		}
 		
-		for(int i = 0; i < spawns.size(); ++i) {
-			if(spawns.get(i).index >= spawns.get(i).enemies.size()) {
-				spawns.remove(i);
+		if(state == 2) {
+			delay -= delta;
+			
+			if(delay <= 0) {
+				gui.setSpawn(null);
 				
-				--i;
-				
-				continue;
+				state = 3;
+			} else {			
+				gui.setSpawn(Math.round(delay / 1000.0f));
+			}
+		}
+		
+		if(state == 3) {			
+			if(spawns.get(wave).index >= spawns.get(wave).enemies.size()) {
+				state = 4;
 			}
 			
-			if(spawns.get(i).delay <= EPS) {
-				int j = spawns.get(i).index;
+			if(spawns.get(wave).delay <= EPS) {
+				int j = spawns.get(wave).index;
 				
-				Enemy e = spawns.get(i).enemies.get(j);
+				Enemy e = spawns.get(wave).enemies.get(j);
 				
-				e.position = spawns.get(i).spawn;
+				e.position = spawns.get(wave).spawn;
 				
 				enemies.add(e);
 				
-				spawns.get(i).index = j + 1;
+				spawns.get(wave).index = j + 1;
 				
-				spawns.get(i).delay = SPAWN_DELAY;
+				spawns.get(wave).delay = SPAWN_DELAY;
 			} else {
-				spawns.get(i).delay -= delta;
+				spawns.get(wave).delay -= delta;
 			}
 		}
 		
-		for(Tower T : towers) {
-			T.update(delta);
+		if(enemies.size() == 0 && state == 4) {
+			System.out.println("LEVEL COMPLETE");
 			
-			if(T.getDelay() <= EPS) {
-				T.setDelay(T.getSpeed());
+			if(wave + 1 >= spawns.size()) {
+				state = 5;
 			}
 		}
 		
-		Iterator<Projectile> projectileIterator = projectiles.iterator();
-		
-		while(projectileIterator.hasNext()) {
-			Projectile P = projectileIterator.next();
-			
-			if(!P.hasHitTarget()) {
-				P.update(delta);
-			} else {
-				enemies.remove(P.getTarget());
+		if(state != 6) {
+			for(List<Enemy>[] L : collision) {
+				for(List<Enemy> list : L) {
+					list.clear();
+				}
 			}
-		}
-		
-		Iterator<Enemy> enemyIterator = enemies.iterator();
-		
-		while(enemyIterator.hasNext()) {
-			Enemy E = enemyIterator.next();
 			
-			if(!E.hasReachedDestination()) {				
-				E.update(delta);
-			} else {
-				--lives;
+			Iterator<Projectile> projectileIterator = projectiles.iterator();
+			
+			while(projectileIterator.hasNext()) {
+				Projectile P = projectileIterator.next();
 				
-				enemyIterator.remove();
+				if(P.getTarget().hasReachedDestination() && !P.hasHitTarget()) {
+					projectileIterator.remove();
+					
+					continue;
+				}
+				
+				if(!P.hasHitTarget()) {
+					P.update(delta);
+				} else {
+					if(P.getSource().getProjectileName().equals("fireball")) {
+						List<Enemy> enemies = getEnemiesInRange(pointGrid(P.getPosition()), 2);
+						
+						P.getTarget().takeDamage(P.getSource().getPower() - P.getTarget().getDefense());
+						
+						for(Enemy E : enemies) {
+							if(E != P.getTarget()) {
+								E.takeDamage(P.getSource().getPower() * 0.2f - E.getDefense());
+								E.takePreDamage(P.getSource().getPower() * 0.2f - E.getDefense());
+							}
+						}
+					} else if(P.getSource().getProjectileName().equals("rock")) {
+						List<Enemy> enemies = getEnemiesInRange(new Point(P.getPosition().y(), P.getPosition().x()), 1);
+						
+						System.out.println(enemies.size());
+						System.out.println(P.getPosition());
+						
+						P.getTarget().takeDamage(P.getSource().getPower() - P.getTarget().getDefense());
+						
+						for(Enemy E : enemies) {
+							if(E != P.getTarget()) {
+								E.takeDamage(P.getSource().getPower() * 0.65f - E.getDefense());
+								E.takePreDamage(P.getSource().getPower() * 0.65f - E.getDefense());
+							}
+						}
+					} else if(P.getSource().getProjectileName().equals("bubble")) {
+						List<Enemy> enemies = getEnemiesInRange(pointGrid(P.getPosition()), 3);
+						
+						P.getTarget().takeDamage(P.getSource().getPower() - P.getTarget().getDefense());
+						
+						for(Enemy E : enemies) {
+							if(E != P.getTarget()) {
+								E.takeDamage(P.getSource().getPower() * 0.1f - E.getDefense());
+								E.takePreDamage(P.getSource().getPower() * 0.1f - E.getDefense());
+							}
+						}
+					} else if(P.getSource().getProjectileName().equals("air")) {
+						float s = 0.7f;
+						
+						if(P.getTarget().hasEnhancer(Enhancer.SPEED, s)) {
+							P.getTarget().removeEnhancer(Enhancer.SPEED, s);
+						}
+						
+						P.getTarget().addEnhancer(Enhancer.SPEED, s, 3000.0f);
+					}
+					
+					projectileIterator.remove();
+				}
+			}
+			
+			Iterator<Enemy> enemyIterator = enemies.iterator();
+			
+			while(enemyIterator.hasNext()) {
+				Enemy E = enemyIterator.next();
+				
+				if(E.isDead()) {
+					enemyIterator.remove();
+					
+					continue;
+				}
+				
+				if(!E.hasReachedDestination()) {				
+					E.update(delta);
+					
+					Point P = E.getPosition();
+					
+					collision[(int)P.x()][(int)P.y()].add(E);
+				} else {
+					--lives;
+					
+					E.setHealth(0);
+					
+					enemyIterator.remove();
+				}
+			}
+			
+			for(Tower T : towers) {
+				T.update(delta);
+				
+				if(T.getDelay() <= EPS) {
+					List<Enemy> list = getEnemiesInRange(pointGrid(T.getPosition()), Math.round(T.getRange()));
+					
+					if(list.size() > 0 && T.getProjectileName() != null) {
+						float d = 0.0f;
+						
+						Collections.sort(list, new Comparator<Enemy>() {
+							@Override
+							public int compare(Enemy a, Enemy b) {
+								if(a.isLikelyDead() && b.isLikelyDead()) {
+									return 0;
+								}
+								
+								if(a.isLikelyDead()) {
+									return 1;
+								}
+								
+								if(b.isLikelyDead()) {
+									return -1;
+								}
+								
+								return Float.compare(b.getDistance(), a.getDistance());
+							}
+						});
+						
+						Enemy E = list.get(0);
+						
+						if(E.isLikelyDead()) {
+							continue;
+						}
+						
+						if(T.getProjectileName().equals("fireball")) {
+							E.takePreDamage(T.getPower() - E.getDefense());
+						} else if(T.getProjectileName().equals("rock")) {
+							E.takePreDamage(T.getPower() - E.getDefense());
+						} else if(T.getProjectileName().equals("bubble")) {							
+							E.takePreDamage(T.getPower() - E.getDefense());
+						} else if(T.getProjectileName().equals("air")) {							
+							for(int i = 0; i < list.size(); ++i) {
+								if(!list.get(i).hasEnhancer(Enhancer.SPEED, 0.7f)) {									
+									E = list.get(i);
+								}
+							}
+							
+							E = list.get((int)(PlayN.random() * list.size()));
+						}
+						
+						Projectile P = new Projectile(projectileMap.get(T.getProjectileName()), pointGrid(new Point(T.getPosition().y(), T.getPosition().x())), list.get(0), T, d);
+						
+						projectiles.add(P);
+						
+						T.setDelay(T.getSpeed());
+					}
+				}
 			}
 		}
 		
@@ -536,12 +710,51 @@ public class World {
 	}
 	
 	private void initialize() {
+		setupProjectiles();
 		setupTowers();
 		setupEnemies();
 		setupLevels();
 	}
 	
-	private void setupTowers() {	
+	private void setupProjectiles() {
+		Image fireball = assets().getImage("images/bullets/fireBullet.png");
+		Image rock = assets().getImage("images/bullets/earthBullet.png");
+		Image bubble = assets().getImage("images/bullets/waterBullet.png");
+		Image air = assets().getImage("images/bullets/windBullet.png");
+		
+		Projectile fire = new Projectile();
+		
+		fire.sprite = fireball;
+		fire.spawnSound = null;
+		fire.despawnSound = null;
+		
+		Projectile earth = new Projectile();
+		
+		earth.sprite = rock;
+		earth.spawnSound = null;
+		earth.despawnSound = null;
+		
+		Projectile water = new Projectile();
+		
+		water.sprite = bubble;
+		water.spawnSound = null;
+		water.despawnSound = null;
+		
+		Projectile wind = new Projectile();
+		
+		wind.sprite = air;
+		wind.spawnSound = null;
+		wind.despawnSound = null;
+		
+		projectileMap = new TreeMap<String, Projectile>();
+		
+		projectileMap.put("fireball", fire);
+		projectileMap.put("rock", earth);
+		projectileMap.put("bubble", water);
+		projectileMap.put("air", wind);
+	}
+	
+	private void setupTowers() {
 		Image fireImage = assets().getImage("images/towers/fireTower.png");
 		Image heartImage = assets().getImage("images/towers/heartTower.png");
 		Image earthImage = assets().getImage("images/towers/earthTower.png");
@@ -551,9 +764,9 @@ public class World {
 		fireTemplate = new Tower("Fire");
 		
 		fireTemplate.killCount = 0;
-		fireTemplate.range = 3;
-		fireTemplate.speed = 10;
-		fireTemplate.delay = 3000;
+		fireTemplate.power = 4;
+		fireTemplate.range = 2;
+		fireTemplate.speed = 3000;
 		fireTemplate.first = true;
 		fireTemplate.cost = 5;
 		fireTemplate.totalCost = 0;
@@ -574,9 +787,9 @@ public class World {
 		earthTemplate = new Tower("Earth");
 		
 		earthTemplate.killCount = 0;
+		earthTemplate.power = 4;
 		earthTemplate.range = 1;
-		earthTemplate.speed = 10;
-		earthTemplate.delay = 3000;
+		earthTemplate.speed = 3000;
 		earthTemplate.first = true;
 		earthTemplate.cost = 5;
 		earthTemplate.totalCost = 0;
@@ -597,9 +810,9 @@ public class World {
 		waterTemplate = new Tower("Water");
 		
 		waterTemplate.killCount = 0;
-		waterTemplate.range = 6;
-		waterTemplate.speed = 10;
-		waterTemplate.delay = 2000;
+		waterTemplate.power = 4;
+		waterTemplate.range = 3;
+		waterTemplate.speed = 2000;
 		waterTemplate.first = true;
 		waterTemplate.cost = 5;
 		waterTemplate.totalCost = 0;
@@ -620,9 +833,9 @@ public class World {
 		windTemplate = new Tower("Wind");
 		
 		windTemplate.killCount = 0;
-		windTemplate.range = 1;
-		windTemplate.speed = 10;
-		windTemplate.delay = 1000;
+		windTemplate.power = 0;
+		windTemplate.range = 2;
+		windTemplate.speed = 1000;
 		windTemplate.first = true;
 		windTemplate.cost = 5;
 		windTemplate.totalCost = 0;
@@ -643,9 +856,9 @@ public class World {
 		heartTemplate = new Tower("Heart");
 		
 		heartTemplate.killCount = 0;
-		heartTemplate.range = 1;
-		heartTemplate.speed = 10;
-		heartTemplate.delay = 1000;
+		heartTemplate.power = 0;
+		heartTemplate.range = 0;
+		heartTemplate.speed = 1000;
 		heartTemplate.first = true;
 		heartTemplate.cost = 25;
 		heartTemplate.totalCost = 0;
@@ -656,7 +869,7 @@ public class World {
 		heartTemplate.upgradeCost = 10;
 		heartTemplate.powerUpgradeCost = 0;
 		heartTemplate.speedUpgradeCost = 0;
-		heartTemplate.projectileName = "love";
+		heartTemplate.projectileName = null;
 		
 		heartTemplate.sprite = heartImage;
 		heartTemplate.spawnSound = null;
@@ -722,9 +935,9 @@ public class World {
 		availableEnemies[4] = new Enemy("Armored Carrier");
 		
 		availableEnemies[4].speed = 1.0f;
-		availableEnemies[4].defense = 5;
+		availableEnemies[4].defense = 8;
 		availableEnemies[4].bounty = 5;
-		availableEnemies[4].maxHealth = 30;
+		availableEnemies[4].maxHealth = 100;
 		
 		availableEnemies[4].sprite = assets().getImage("images/enemies/Enemy_Carrier_Slow.png");
 		availableEnemies[4].spawnSound = null;
@@ -732,7 +945,7 @@ public class World {
 	}
 	
 	private void setupLevels() {
-		levels = new Level[1];
+		levels = new Level[5];
 		
 		levels[0] = new Level("The Attack");
 		
@@ -756,12 +969,195 @@ public class World {
 		
 		levels[0].spawn = new Point[] { new Point(3, 0) };
 		
-		levels[0].path = new Point[][] { new Point[4] };
+		levels[0].path = new Point[][] { new Point[40] };
 		
 		levels[0].path[0][0] = new Point(3, 3);
 		levels[0].path[0][1] = new Point(6, 3);
 		levels[0].path[0][2] = new Point(6, 5);
-		levels[0].path[0][3] = new Point(0, 16);
+		levels[0].path[0][3] = new Point(9, 5);
+		levels[0].path[0][4] = new Point(9, 7);
+		levels[0].path[0][5] = new Point(12, 7);
+		levels[0].path[0][6] = new Point(12, 9);
+		levels[0].path[0][7] = new Point(15, 9);
+		levels[0].path[0][8] = new Point(15, 11);
+		levels[0].path[0][9] = new Point(18, 11);
+		levels[0].path[0][10] = new Point(18, 15);
+		levels[0].path[0][11] = new Point(14, 15);
+		levels[0].path[0][12] = new Point(14, 13);
+		levels[0].path[0][13] = new Point(11, 13);
+		levels[0].path[0][14] = new Point(11, 11);
+		levels[0].path[0][15] = new Point(8, 11);
+		levels[0].path[0][16] = new Point(8, 9);
+		levels[0].path[0][17] = new Point(5, 9);
+		levels[0].path[0][18] = new Point(5, 7);
+		levels[0].path[0][19] = new Point(1, 7);
+		levels[0].path[0][20] = new Point(1, 12);
+		levels[0].path[0][21] = new Point(4, 12);
+		levels[0].path[0][22] = new Point(4, 14);
+		levels[0].path[0][23] = new Point(7, 14);
+		levels[0].path[0][24] = new Point(7, 16);
+		levels[0].path[0][25] = new Point(10, 16);
+		levels[0].path[0][26] = new Point(10, 18);
+		levels[0].path[0][27] = new Point(13, 18);
+		levels[0].path[0][28] = new Point(13, 20);
+		levels[0].path[0][29] = new Point(16, 20);
+		levels[0].path[0][30] = new Point(16, 24);
+		levels[0].path[0][31] = new Point(12, 24);
+		levels[0].path[0][32] = new Point(12, 22);
+		levels[0].path[0][33] = new Point(9, 22);
+		levels[0].path[0][34] = new Point(9, 20);
+		levels[0].path[0][35] = new Point(6, 20);
+		levels[0].path[0][36] = new Point(6, 18);
+		levels[0].path[0][37] = new Point(3, 18);
+		levels[0].path[0][38] = new Point(3, 16);
+		
+		// End
+		levels[0].path[0][39] = new Point(0, 16);
+		
+		//Map 2
+		
+		levels[1] = new Level("The Attack");
+		
+		levels[1].story = "An unknown enemy is attempting to attack your northern front, defend it!";
+		levels[1].waveCount = 1;
+		levels[1].background = assets().getImage("images/maps/Map2.png");
+		levels[1].initialMoney = 100;
+		levels[1].grid = new Object[20][29];
+		levels[1].waveDelay = new float[] { 30000 };
+		levels[1].enemies = new Enemy[1][1][1];
+		levels[1].enemyCount = new int[1][1][1];
+		
+		for(Object[] o : levels[1].grid) {
+			for(int i = 0; i < o.length; ++i) {
+				o[i] = BUILDABLE;
+			}
+		}
+		
+		levels[1].enemies[0][0][0] = availableEnemies[SWIFT_SOLDIER];
+		levels[1].enemyCount[0][0][0] = 1;
+		
+		levels[1].spawn = new Point[] { new Point(8, 0) };
+		
+		levels[1].path = new Point[][] { new Point[11] };
+		
+		levels[1].path[0][0] = new Point(8, 4);
+		levels[1].path[0][1] = new Point(17, 4);
+		levels[1].path[0][2] = new Point(17, 24);
+		levels[1].path[0][3] = new Point(4, 24);
+		levels[1].path[0][4] = new Point(4, 11);
+		levels[1].path[0][5] = new Point(10, 11);
+		levels[1].path[0][6] = new Point(10, 20);	
+		levels[1].path[0][7] = new Point(15, 20);	
+		levels[1].path[0][8] = new Point(15, 8);
+		levels[1].path[0][9] = new Point(1, 8);
+		// End
+		levels[1].path[0][10] = new Point(1, 28);
+		
+		//Map 3
+		
+		levels[2] = new Level("The Attack");
+		
+		levels[2].story = "An unknown enemy is attempting to attack your northern front, defend it!";
+		levels[2].waveCount = 1;
+		levels[2].background = assets().getImage("images/maps/Map3.png");
+		levels[2].initialMoney = 100;
+		levels[2].grid = new Object[20][29];
+		levels[2].waveDelay = new float[] { 30000 };
+		levels[2].enemies = new Enemy[1][1][1];
+		levels[2].enemyCount = new int[1][1][1];
+		
+		for(Object[] o : levels[2].grid) {
+			for(int i = 0; i < o.length; ++i) {
+				o[i] = BUILDABLE;
+			}
+		}
+		
+		levels[2].enemies[0][0][0] = availableEnemies[SWIFT_SOLDIER];
+		levels[2].enemyCount[0][0][0] = 10;
+		
+		levels[2].spawn = new Point[] { new Point(2, 0) };
+		
+		levels[2].path = new Point[][] { new Point[10] };
+		
+		levels[2].path[0][0] = new Point(2, 25);
+		levels[2].path[0][1] = new Point(5, 25);
+		levels[2].path[0][2] = new Point(5, 5);
+		levels[2].path[0][3] = new Point(8, 5);
+		levels[2].path[0][4] = new Point(8, 21);
+		levels[2].path[0][5] = new Point(12, 21);
+		levels[2].path[0][6] = new Point(12, 9);
+		levels[2].path[0][7] = new Point(16, 9);
+		levels[2].path[0][8] = new Point(16, 19);
+		//end
+		levels[2].path[0][9] = new Point(19, 19);
+		
+		//Map 4
+		
+		levels[3] = new Level("The Attack");
+		
+		levels[3].story = "An unknown enemy is attempting to attack your northern front, defend it!";
+		levels[3].waveCount = 1;
+		levels[3].background = assets().getImage("images/maps/Map4.png");
+		levels[3].initialMoney = 100;
+		levels[3].grid = new Object[20][29];
+		levels[3].waveDelay = new float[] { 30000 };
+		levels[3].enemies = new Enemy[1][1][1];
+		levels[3].enemyCount = new int[1][1][1];
+		
+		for(Object[] o : levels[3].grid) {
+			for(int i = 0; i < o.length; ++i) {
+				o[i] = BUILDABLE;
+			}
+		}
+		
+		levels[3].enemies[0][0][0] = availableEnemies[SWIFT_SOLDIER];
+		levels[3].enemyCount[0][0][0] = 10;
+		
+		levels[3].spawn = new Point[] { new Point(0, 0) };
+		
+		levels[3].path = new Point[][] { new Point[14] };
+		
+		levels[3].path[0][0] = new Point(0, 28);
+		levels[3].path[0][1] = new Point(19, 28);
+		levels[3].path[0][2] = new Point(19, 3);
+		levels[3].path[0][3] = new Point(3, 3);
+		levels[3].path[0][4] = new Point(3, 25);
+		levels[3].path[0][5] = new Point(16, 25);
+		levels[3].path[0][6] = new Point(16, 6);
+		levels[3].path[0][7] = new Point(6, 6);
+		levels[3].path[0][8] = new Point(6, 22);
+		levels[3].path[0][9] = new Point(13, 22);
+		levels[3].path[0][10] = new Point(13, 9);
+		levels[3].path[0][11] = new Point(9, 9);
+		levels[3].path[0][12] = new Point(9, 19);
+		//END
+		levels[3].path[0][13] = new Point(11, 19);
+
+		//MAP 5
+		
+	}
+	
+	public List<Enemy> getEnemiesInRange(Point p, int r) {
+		int x = (int)p.x();
+		int y = (int)p.y();
+		
+		List<Enemy> list = new ArrayList<Enemy>();
+		
+		for(int i = y - r; i <= y + r; ++i) {
+			if(i < 0 || i > 19) {
+				continue;
+			}
+			
+			for(int j = x - r; j <= x + r; ++j) {
+				if(j < 0 || j > 28) {
+					continue;
+				}
+				
+				list.addAll(collision[i][j]);
+			}
+		}
+		
+		return list;
 	}
 	
 	private Point pointGrid(Point p) {

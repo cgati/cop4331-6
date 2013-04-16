@@ -26,6 +26,7 @@ public class ElementDefense implements Game {
 	
 	private MainMenuGui mainMenu;
 	private OptionsMenuGui optionsMenu;
+	private GameOverMenuGui gameOverMenu;
 	
 	private final float WIDTH = 1280.0f, HEIGHT = 720.0f;
 	
@@ -88,6 +89,7 @@ public class ElementDefense implements Game {
 		
 		mainMenu = new MainMenuGui(layer);
 		optionsMenu = new OptionsMenuGui(layer);
+		gameOverMenu = new GameOverMenuGui(layer);
 		
 		mainMenu.show();
 		
@@ -126,6 +128,7 @@ public class ElementDefense implements Game {
 
 		mainMenu.paint(alpha);
 		optionsMenu.paint(alpha);
+		gameOverMenu.paint(alpha);
 		
 		if(inGame) {
 			currentWorld.paint(alpha);

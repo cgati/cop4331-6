@@ -10,7 +10,7 @@ import pythagoras.f.Point;
 
 public class MainMenuGui extends Gui {
 	private Image mainMenuImage;
-	private Button playButton, optionsButton;
+	private Button playButton, endlessButton, optionsButton;
 
 	public MainMenuGui(SurfaceLayer layer) {
 		super(layer);
@@ -27,6 +27,7 @@ public class MainMenuGui extends Gui {
 				
 				playButton.pointerStart(p);
 				optionsButton.pointerStart(p);
+				endlessButton.pointerStart(p);
 			}
 
 			@Override
@@ -40,6 +41,7 @@ public class MainMenuGui extends Gui {
 				
 				playButton.pointerEnd(p);
 				optionsButton.pointerEnd(p);
+				endlessButton.pointerEnd(p);
 			}
 
 			@Override
@@ -56,7 +58,7 @@ public class MainMenuGui extends Gui {
 		
 		Interval2D i2d;
 		
-		i2d = new Interval2D(new Interval(540,740), new Interval(400,470));
+		i2d = new Interval2D(new Point(280, 430), 200, 75);
 		playButton = new Button(i2d) {
 
 			@Override
@@ -65,8 +67,8 @@ public class MainMenuGui extends Gui {
 			}
 			
 		};
-		
-		i2d = new Interval2D(new Interval(540,740), new Interval(512,582));
+
+		i2d = new Interval2D(new Point(800, 430), 200, 75);
 		optionsButton = new Button(i2d) {
 
 			@Override
@@ -76,6 +78,20 @@ public class MainMenuGui extends Gui {
 				ElementDefense.getInstance().getOptionsGui().show();
 				
 				ElementDefense.getInstance().getOptionsGui().alert(MainMenuGui.this);
+			}
+			
+		};
+		
+		i2d = new Interval2D(new Point(540, 430), 200, 75);
+		endlessButton = new Button(i2d) {
+
+			@Override
+			public void pressEvent() {
+				// hide();
+				
+				// ElementDefense.getInstance().getOptionsGui().show();
+				
+				// ElementDefense.getInstance().getOptionsGui().alert(MainMenuGui.this);
 			}
 			
 		};
@@ -90,6 +106,7 @@ public class MainMenuGui extends Gui {
 		
 		playButton.mouseMove(p);
 		optionsButton.mouseMove(p);
+		endlessButton.mouseMove(p);
 	}
 
 	@Override
@@ -102,6 +119,7 @@ public class MainMenuGui extends Gui {
 		
 		playButton.paint(alpha, surface);
 		optionsButton.paint(alpha, surface);
+		endlessButton.paint(alpha, surface);
 	}
 
 }

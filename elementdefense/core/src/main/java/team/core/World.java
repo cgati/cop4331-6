@@ -1572,13 +1572,13 @@ public class World {
 		levels[3] = new Level("The Attack");
 
 		levels[3].story = "An unknown enemy is attempting to attack your northern front, defend it!";
-		levels[3].waveCount = 3;
+		levels[3].waveCount = 4;
 		levels[3].background = assets().getImage("images/maps/Map4.png");
-		levels[3].initialMoney = 80;
+		levels[3].initialMoney = 100;
 		levels[3].grid = new Object[20][29];
-		levels[3].waveDelay = new float[] { 15000 , 10000, 15000};
-		levels[3].enemies = new Enemy[3][3];
-		levels[3].enemyCount = new int[3][3];
+		levels[3].waveDelay = new float[] { 15000 , 10000, 15000, 10000};
+		levels[3].enemies = new Enemy[4][3];
+		levels[3].enemyCount = new int[4][3];
 
 		for (Object[] o : levels[3].grid) {
 			for (int i = 0; i < o.length; ++i) {
@@ -1589,23 +1589,27 @@ public class World {
 		levels[3].enemies[0][0] = availableEnemies[this.MARINE];
 		levels[3].enemyCount[0][0] = 10;
 		levels[3].enemies[0][1] = availableEnemies[this.ARMORED_SOLDIER];
-		levels[3].enemyCount[0][1] = 10;
+		levels[3].enemyCount[0][1] = 2;
 		levels[3].enemies[0][2] = availableEnemies[this.SWIFT_SOLDIER];
 		levels[3].enemyCount[0][2] = 70;
 		
-		levels[3].enemies[1][0] = availableEnemies[SWIFT_SOLDIER];
+		levels[3].enemies[1][0] = availableEnemies[this.MARINE];
 		levels[3].enemyCount[1][0] = 10;
-		levels[3].enemies[1][1] = availableEnemies[SWIFT_SOLDIER];
-		levels[3].enemyCount[1][1] = 10;
-		levels[3].enemies[1][1] = availableEnemies[SWIFT_SOLDIER];
-		levels[3].enemyCount[1][1] = 10;
+		levels[3].enemies[1][1] = availableEnemies[this.SWIFT_SOLDIER];
+		levels[3].enemyCount[1][1] = 50;
+		levels[3].enemies[1][1] = availableEnemies[this.ARMORED_SOLDIER];
+		levels[3].enemyCount[1][1] = 3;
 		
-		levels[3].enemies[0][0] = availableEnemies[SWIFT_SOLDIER];
-		levels[3].enemyCount[0][0] = 10;
-		levels[3].enemies[0][0] = availableEnemies[SWIFT_SOLDIER];
-		levels[3].enemyCount[0][0] = 10;
-		levels[3].enemies[0][0] = availableEnemies[SWIFT_SOLDIER];
-		levels[3].enemyCount[0][0] = 10;
+		levels[3].enemies[2][0] = availableEnemies[this.SWIFT_SOLDIER];
+		levels[3].enemyCount[2][0] = 70;
+		levels[3].enemies[2][1] = availableEnemies[this.MARINE];
+		levels[3].enemyCount[2][1] = 10;
+		levels[3].enemies[2][2] = availableEnemies[this.SWIFT_CARRIER];
+		levels[3].enemyCount[2][2] = 3;
+		
+		levels[3].enemies[3][0] = availableEnemies[this.BOSS_3];
+		levels[3].enemyCount[3][0] = 1;
+		
 
 		levels[3].spawn = new Point(0, 0);
 
@@ -1629,16 +1633,16 @@ public class World {
 
 		// MAP 5
 
-		levels[4] = new Level("The Attack");
+		levels[4] = new Level("Final");
 
-		levels[4].story = "An unknown enemy is attempting to attack your northern front, defend it!";
-		levels[4].waveCount = 1;
+		levels[4].story = "The last level, Defeat the Enimey";
+		levels[4].waveCount = 4;
 		levels[4].background = assets().getImage("images/maps/Map5.png");
 		levels[4].initialMoney = 100;
 		levels[4].grid = new Object[20][29];
-		levels[4].waveDelay = new float[] { 30000 };
-		levels[4].enemies = new Enemy[1][1];
-		levels[4].enemyCount = new int[1][1];
+		levels[4].waveDelay = new float[] { 15000 , 10000, 15000, 10000};
+		levels[4].enemies = new Enemy[4][3];
+		levels[4].enemyCount = new int[4][3];
 
 		for (Object[] o : levels[4].grid) {
 			for (int i = 0; i < o.length; ++i) {
@@ -1646,8 +1650,29 @@ public class World {
 			}
 		}
 
-		levels[4].enemies[0][0] = availableEnemies[SWIFT_SOLDIER];
+		levels[4].enemies[0][0] = availableEnemies[this.MARINE];
 		levels[4].enemyCount[0][0] = 10;
+		levels[4].enemies[0][1] = availableEnemies[this.ARMORED_SOLDIER];
+		levels[4].enemyCount[0][1] = 2;
+		levels[4].enemies[0][2] = availableEnemies[this.SWIFT_SOLDIER];
+		levels[4].enemyCount[0][2] = 70;
+		
+		levels[4].enemies[1][0] = availableEnemies[this.MARINE];
+		levels[4].enemyCount[1][0] = 10;
+		levels[4].enemies[1][1] = availableEnemies[this.SWIFT_SOLDIER];
+		levels[4].enemyCount[1][1] = 50;
+		levels[4].enemies[1][1] = availableEnemies[this.ARMORED_SOLDIER];
+		levels[4].enemyCount[1][1] = 3;
+		
+		levels[4].enemies[2][0] = availableEnemies[this.SWIFT_SOLDIER];
+		levels[4].enemyCount[2][0] = 70;
+		levels[4].enemies[2][1] = availableEnemies[this.MARINE];
+		levels[4].enemyCount[2][1] = 10;
+		levels[4].enemies[2][2] = availableEnemies[this.SWIFT_CARRIER];
+		levels[4].enemyCount[2][2] = 3;
+		
+		levels[4].enemies[3][0] = availableEnemies[this.BOSS_4];
+		levels[4].enemyCount[3][0] = 1;
 
 		levels[4].spawn = new Point(2, 0);
 

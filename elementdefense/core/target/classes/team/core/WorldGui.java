@@ -10,7 +10,7 @@ import pythagoras.f.Point;
 
 public class WorldGui extends Gui {
 	protected Point lastPosition;
-	protected Button speedUp, speedDown, moveTower, sellTower, fireTower, heartTower, rockTower, waterTower, windTower, upgradeTower, upgradePower, upgradeSpeed, upgradeRange;
+	protected Button speedUp, speedDown, moveTower, sellTower, fireTower, heartTower, rockTower, waterTower, windTower, upgradeTower, upgradePower, upgradeSpeed, upgradeRange, pauseButton, quitButton;
 	protected Label speedLabel, fireLabel, heartLabel, rockLabel, waterLabel, windLabel, moneyLabel, livesLabel, spawnLabel, costLabel, nameLabel;
 	protected Image fireImage, heartImage, rockImage, waterImage, windImage;
 	
@@ -41,6 +41,9 @@ public class WorldGui extends Gui {
 				windTower.pointerStart(p);
 				waterTower.pointerStart(p);
 				upgradeTower.pointerStart(p);
+				
+				pauseButton.pointerStart(p);
+				quitButton.pointerStart(p);
 			}
 
 			@Override
@@ -66,6 +69,9 @@ public class WorldGui extends Gui {
 				windTower.pointerEnd(p);
 				waterTower.pointerEnd(p);
 				upgradeTower.pointerEnd(p);
+				
+				pauseButton.pointerEnd(p);
+				quitButton.pointerEnd(p);
 			}
 
 			@Override
@@ -208,6 +214,26 @@ public class WorldGui extends Gui {
 			}
 		};
 		
+		pauseButton = new Button(new Point(1044, 0), "PAUSE", 24.0f) {
+			@Override
+			public void pressEvent() {
+				WorldGui.this.hide();
+				
+				ElementDefense.getInstance().getOptionsGui().show();
+				
+				ElementDefense.getInstance().getOptionsGui().alert(WorldGui.this);
+				
+				ElementDefense.getInstance().getWorld().pause();
+			}
+		};
+		
+		quitButton = new Button(new Point(1044 + 200 - 36*3, 0), "QUIT", 24.0f) {
+			@Override
+			public void pressEvent() {
+				ElementDefense.getInstance().quit();
+			}
+		};
+		
 		Interval2D i2d;
 		
 		i2d = new Interval2D(new Point(1044 + 236 / 2 + 36, 36 * 5), 36, 36);
@@ -256,16 +282,16 @@ public class WorldGui extends Gui {
 		};
 		
 		fireImage = assets().getImage("images/towers/fireTower.png");
-		rockImage = assets().getImage("images/towers/rockTower.png");
+		rockImage = assets().getImage("images/towers/earthTower.png");
 		windImage = assets().getImage("images/towers/waterTower.png");
 		waterImage = assets().getImage("images/towers/windTower.png");
 		heartImage = assets().getImage("images/towers/heartTower.png");
 				
-		fireLabel = new Label(new Point(1044, 36 * 5 - 24 / 2 + 36 / 2), "Cost: 5", 24);		
-		rockLabel = new Label(new Point(1044, 36 * 6 - 24 / 2 + 36 / 2), "Cost: 5", 24);
-		windLabel = new Label(new Point(1044, 36 * 7 - 24 / 2 + 36 / 2), "Cost: 5", 24);
-		waterLabel = new Label(new Point(1044, 36 * 8 - 24 / 2 + 36 / 2), "Cost: 5", 24);
-		heartLabel = new Label(new Point(1044, 36 * 9 - 24 / 2 + 36 / 2), "Cost: 25", 24);
+		fireLabel = new Label(new Point(1044, 36 * 5 - 24 / 2 + 36 / 2), "Cost: 20", 24);		
+		rockLabel = new Label(new Point(1044, 36 * 6 - 24 / 2 + 36 / 2), "Cost: 20", 24);
+		windLabel = new Label(new Point(1044, 36 * 7 - 24 / 2 + 36 / 2), "Cost: 20", 24);
+		waterLabel = new Label(new Point(1044, 36 * 8 - 24 / 2 + 36 / 2), "Cost: 20", 24);
+		heartLabel = new Label(new Point(1044, 36 * 9 - 24 / 2 + 36 / 2), "Cost: 150", 24);
 		nameLabel = new Label(new Point(1044, 36 * 10 - 24 / 2 + 36 / 2), "Name: ", 24);
 		
 		moneyLabel = new Label(new Point(1044, 36 * 1), "Money: 10000", 24);
@@ -276,6 +302,13 @@ public class WorldGui extends Gui {
 		speedLabel = new Label(new Point(1280 - 236 + 72, 720 - 36 * 1), "1x");
 		
 		hideSelectedMenu();
+	}
+	
+	public void show() {
+		super.show();
+		
+		if(ElementDefense.getInstance().getWorld().paused())
+			ElementDefense.getInstance().getWorld().unpause();
 	}
 	
 	public void setSpawn(Integer spawn) {
@@ -385,6 +418,9 @@ public class WorldGui extends Gui {
 		livesLabel.paint(alpha, surface);
 		spawnLabel.paint(alpha, surface);
 		costLabel.paint(alpha, surface);
+		
+		quitButton.paint(alpha, surface);
+		pauseButton.paint(alpha, surface);
 	}
 	
 	public void mouseMove(Point p) {		
@@ -410,5 +446,8 @@ public class WorldGui extends Gui {
 		rockTower.mouseMove(p);
 		windTower.mouseMove(p);
 		waterTower.mouseMove(p);
+		
+		pauseButton.mouseMove(p);
+		quitButton.mouseMove(p);
 	}
 }

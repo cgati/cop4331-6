@@ -7,6 +7,7 @@ import playn.core.Font;
 import playn.core.Game;
 import playn.core.Image;
 import playn.core.Layer;
+import playn.core.Sound;
 import playn.core.TextFormat;
 import playn.core.TextLayout;
 import playn.core.Mouse.ButtonEvent;
@@ -21,6 +22,7 @@ public class ElementDefense implements Game {
 	private boolean inGame;
 	private World currentWorld;
 	private SurfaceLayer layer;
+	private Sound bgm;
 	
 	private static final TextFormat textFormat = new TextFormat(graphics().createFont("Courier New", Font.Style.PLAIN, 36.0f), 1280, TextFormat.Alignment.LEFT);
 	
@@ -43,7 +45,12 @@ public class ElementDefense implements Game {
 			throw new RuntimeException("You're trying to run multiple games...");
 		}
 		
-		volume = 1.0f;
+		volume = 0.5f;
+		
+		bgm = assets().getSound("music/bgm");
+		
+		bgm.setLooping(true);
+		bgm.play();
 		
 		defense = this;
 		
@@ -159,6 +166,9 @@ public class ElementDefense implements Game {
 		if(inGame) {
 			currentWorld.update(delta);
 		}
+		
+		if(optionsMenu.hidden)
+			optionsMenu.setVolume(volume);
 	}
 	
 	@Override
@@ -172,6 +182,8 @@ public class ElementDefense implements Game {
 	
 	public void setVolume(float volume) {
 		this.volume = volume;
+		
+		bgm.setVolume(volume);
 	}
 	
 	public static Image getTextImage(String text) {

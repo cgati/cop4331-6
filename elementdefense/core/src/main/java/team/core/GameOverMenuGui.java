@@ -64,7 +64,11 @@ public class GameOverMenuGui extends Gui {
 				GameOverMenuGui.this.hide();
 				
 				ElementDefense.getInstance().quit();
-				ElementDefense.getInstance().startGame();				
+				
+				if(!ElementDefense.getInstance().getWorld().endless)
+					ElementDefense.getInstance().startGame();
+				else 
+					ElementDefense.getInstance().startEndless();
 			}
 			
 		};

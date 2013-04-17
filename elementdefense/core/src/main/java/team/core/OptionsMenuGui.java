@@ -114,6 +114,12 @@ public class OptionsMenuGui extends Gui {
 		cancelButton.paint(alpha, surface);
 	}
 	
+	public void setVolume(float volume) {
+		int v = (int)(volume * 10.0f);
+		
+		volumeBox.setSelected(v);
+	}
+	
 	public void hide() {
 		for(Gui g : alertList) {
 			g.show();
